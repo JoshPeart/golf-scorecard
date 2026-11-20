@@ -175,6 +175,13 @@ export default function App() {
           onCourseChange={updateCourse}
           onBack={() => setScreen("home")}
           saved={!storageError}
+          onDelete={() => {
+            setData((d) => ({
+              ...d,
+              rounds: d.rounds.filter((r) => r.id !== roundId),
+            }));
+            setScreen("home");
+          }}
         />
       )}
     </div>
