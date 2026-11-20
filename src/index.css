@@ -84,6 +84,7 @@ label {
 input,
 select,
 textarea {
+  min-width: 0;
   display: block;
   font-size: 16px;
   width: 100%;
@@ -114,6 +115,7 @@ th {
   font-size: 12px;
 }
 fieldset {
+  min-width: 0;
   border: 1px solid #d8dfd7;
   border-radius: 12px;
   margin: 12px 0;
