@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Course, Round } from "./types";
 import { relative, segment } from "./scoring";
+import { switchTee } from "./rounds";
 export function Scorecard({
   round,
   course,
@@ -35,6 +36,8 @@ export function Scorecard({
     if (summary) window.scrollTo(0, 0);
     else heroRef.current?.scrollIntoView({ block: "start" });
   }, [hole, summary]);
+  const startHole = round.startHole ?? 0;
+  const courseHole = startHole + hole;
   const [editing, setEditing] = useState(false);
   const [par, setPar] = useState(4);
   const [also, setAlso] = useState(false);
@@ -84,7 +87,38 @@ export function Scorecard({
           month: "long",
           day: "numeric",
         })}{" "}
-        · {tee?.name || "Removed tee"} tees
+        ·{" "}
+        {course && course.tees.length > 1 ? (
+          <select
+            className="tee-select"
+            aria-label="Round tee"
+            value={round.teeId}
+            onChange={(e) => {
+              const next = course.tees.find((t) => t.id === e.target.value);
+              if (
+                next &&
+                confirm(
+                  "Switch tees? New pars apply to the current and later holes only if no player has scored them. Scored holes and earlier holes keep their par.",
+                )
+              ) {
+                onChange(switchTee(round, next, hole));
+                setEditing(false);
+                setPar(next.pars[courseHole] ?? round.pars[hole]);
+                setAlso(false);
+              }
+            }}
+          >
+            {!tee && <option value={round.teeId}>Removed tee</option>}
+            {course.tees.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          tee?.name || "Removed tee"
+        )}{" "}
+        tees
       </div>
       <h1 className="course-title">{course?.name || "Deleted course"}</h1>
       <div className="tabs">
@@ -105,12 +139,12 @@ export function Scorecard({
         <>
           <div className="hole-hero" ref={heroRef}>
             <div className="eyebrow">
-              {hole < 9 ? "FRONT NINE" : "BACK NINE"}{" "}
+              {courseHole < 9 ? "FRONT NINE" : "BACK NINE"}{" "}
               <span> / {round.pars.length} HOLES</span>
             </div>
             <div className="hole-number">
               <span>Hole</span>
-              <strong>{String(hole + 1).padStart(2, "0")}</strong>
+              <strong>{String(courseHole + 1).padStart(2, "0")}</strong>
             </div>
             <div className="hole-meta">
               <button
@@ -123,7 +157,7 @@ export function Scorecard({
                 PAR <b>{round.pars[hole]}</b> <span>✎</span>
               </button>
               <span className="yardage">
-                {tee?.yardages?.[hole] ?? "—"} <small>YDS</small>
+                {tee?.yardages?.[courseHole] ?? "—"} <small>YDS</small>
               </span>
             </div>
           </div>
@@ -143,7 +177,9 @@ export function Scorecard({
                       t.id === tee.id
                         ? {
                             ...t,
-                            pars: t.pars.map((p, i) => (i === hole ? par : p)),
+                            pars: t.pars.map((p, i) =>
+                              i === courseHole ? par : p,
+                            ),
                           }
                         : t,
                     ),
@@ -152,7 +188,7 @@ export function Scorecard({
               }}
             >
               <label>
-                Par for hole {hole + 1}
+                Par for hole {courseHole + 1}
                 <select
                   value={par}
                   onChange={(e) => setPar(Number(e.target.value))}
@@ -336,7 +372,7 @@ export function Scorecard({
                           navigate(h, false);
                         }}
                       >
-                        {h + 1} ↗
+                        {startHole + h + 1} ↗
                       </button>
                     </th>
                     <td>{par}</td>
@@ -346,7 +382,7 @@ export function Scorecard({
                   </tr>
                 ))}
                 {[
-                  ["Out", 0, 9],
+                  [startHole === 9 ? "In" : "Out", 0, 9],
                   ...(round.pars.length > 9 ? [["In", 9, 18]] : []),
                   ["Total", 0, round.pars.length],
                 ].map(([label, start, end]) => (

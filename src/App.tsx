@@ -4,6 +4,8 @@ import { load, save } from "./storage";
 import { relative, segment } from "./scoring";
 import { CourseEditor } from "./CourseEditor";
 import { Scorecard } from "./Scorecard";
+import { createRound } from "./rounds";
+import type { RoundLength } from "./rounds";
 import "./App.css";
 
 export default function App() {
@@ -203,6 +205,7 @@ function NewRound({
   const course = courses.find((c) => c.id === courseId);
   const [teeId, setTeeId] = useState(course?.tees[0]?.id || "");
   const [names, setNames] = useState("");
+  const [length, setLength] = useState<RoundLength>("18");
   return (
     <main>
       <button className="text-button" onClick={onBack}>
@@ -230,15 +233,7 @@ function NewRound({
                 .map((n) => n.trim())
                 .filter(Boolean),
             ];
-            onStart({
-              id: crypto.randomUUID(),
-              courseId,
-              teeId,
-              date: new Date().toISOString(),
-              players,
-              pars: [...tee.pars],
-              scores: players.map(() => Array(course.holes).fill(null)),
-            });
+            onStart(createRound(course, tee, players, length));
           }}
         >
           <label>
@@ -269,6 +264,19 @@ function NewRound({
               ))}
             </select>
           </label>
+          {course?.holes === 18 && (
+            <label>
+              Holes to play
+              <select
+                value={length}
+                onChange={(e) => setLength(e.target.value as RoundLength)}
+              >
+                <option value="18">18 holes</option>
+                <option value="front">Front 9 (1–9)</option>
+                <option value="back">Back 9 (10–18)</option>
+              </select>
+            </label>
+          )}
           <label>
             Playing partners <span className="muted">(optional)</span>
             <input

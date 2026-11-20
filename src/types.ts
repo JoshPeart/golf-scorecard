@@ -20,6 +20,7 @@ export interface Round {
   pars: number[];
   scores: (number | null)[][];
   notes?: string;
+  startHole?: number;
 }
 export interface Store {
   courses: Course[];
