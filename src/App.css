@@ -1,0 +1,418 @@
+.app {
+  max-width: 760px;
+  margin: auto;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #dde3d8;
+  padding: 16px 24px;
+}
+.brand {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.brand-icon {
+  font-size: 26px;
+}
+.brand-light {
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #76867b;
+  font-size: 12px;
+}
+.local {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #76867b;
+}
+main {
+  padding: 28px 24px 32px;
+}
+.eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  margin: 24px 0 12px;
+  color: #667c6d;
+}
+.primary {
+  background: #234c3a;
+  color: #fff;
+  border-color: #234c3a;
+  font-weight: 600;
+}
+.wide {
+  width: 100%;
+  margin: 12px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.muted {
+  color: #79867b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.text-button {
+  background: none;
+  border: 0;
+  padding: 8px 0;
+  font-weight: 600;
+}
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 28px 0 12px;
+}
+.section-heading h2 {
+  margin: 0;
+}
+.section-heading > span {
+  font-size: 11px;
+}
+.empty {
+  padding: 22px;
+  border: 1px dashed #d1dacd;
+  border-radius: 12px;
+  color: #7a897d;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.list-card {
+  display: flex;
+  text-align: left;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 18px;
+  margin: 10px 0;
+  border-color: #e1e6dc;
+  gap: 12px;
+}
+.list-card small {
+  color: #79867b;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+.list-card b {
+  font-size: 13px;
+}
+.danger {
+  color: #a54135;
+  background: none;
+  border-color: #e5c6bf;
+}
+.table-scroll {
+  overflow-x: auto;
+  margin: 16px 0 24px;
+  background: white;
+  border: 1px solid #e1e6dc;
+  border-radius: 12px;
+}
+.hole-inputs {
+  display: flex;
+  gap: 6px;
+}
+.hole-inputs input {
+  width: 74px;
+}
+.hole-inputs select {
+  width: 58px;
+}
+.hole-inputs input,
+.hole-inputs select {
+  margin: 0;
+  padding: 8px;
+}
+.round-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.save-status {
+  color: #6a806c;
+  font-size: 11px;
+}
+.scorecard {
+  padding-top: 14px;
+}
+.scorecard > .eyebrow {
+  margin-top: 20px;
+  font-size: 9px;
+}
+.course-title {
+  font-size: 27px;
+  letter-spacing: -1px;
+  line-height: 1.3;
+  margin-bottom: 20px;
+}
+.tabs {
+  display: flex;
+  background: #e9ede4;
+  padding: 4px;
+  border-radius: 10px;
+  gap: 4px;
+}
+.tabs button {
+  width: 50%;
+  border: 0;
+  background: none;
+  min-height: 37px;
+  padding: 8px;
+  color: #71806f;
+  font-size: 12px;
+}
+.tabs button.active {
+  background: #fff;
+  color: #234c3a;
+  box-shadow: 0 1px 4px #203f3510;
+  font-weight: 700;
+}
+.hole-hero {
+  margin-top: 20px;
+  background: #254d3c;
+  color: #fff;
+  padding: 22px 24px 18px;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.hole-hero:after {
+  content: "";
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  border: 1px solid #ffffff0d;
+  border-radius: 50%;
+  top: 25px;
+  right: -90px;
+  box-shadow:
+    0 0 0 24px #ffffff04,
+    0 0 0 48px #ffffff03;
+  pointer-events: none;
+}
+.hole-hero .eyebrow {
+  margin: 0;
+  color: #d1e19f;
+  font-size: 9px;
+  letter-spacing: 1.6px;
+}
+.hole-hero .eyebrow span {
+  color: #a5b8a8;
+  letter-spacing: 1px;
+}
+.hole-number {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 8px 0 12px;
+}
+.hole-number > span {
+  font-size: 17px;
+  color: #c1d0c3;
+}
+.hole-number strong {
+  font-family: Manrope, sans-serif;
+  font-size: 86px;
+  line-height: 1.2;
+  font-weight: 500;
+  letter-spacing: -5px;
+}
+.hole-meta {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  border-top: 1px solid #ffffff21;
+  padding-top: 12px;
+}
+.hole-meta button {
+  padding: 0;
+  background: none;
+  color: #c3d1c4;
+  border: 0;
+  min-height: 44px;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+.hole-meta button b {
+  color: white;
+  font-size: 20px;
+  margin: 0 8px;
+}
+.hole-meta button span {
+  color: #d1e19f;
+}
+.yardage {
+  border-left: 1px solid #ffffff30;
+  padding-left: 20px;
+  font-size: 20px;
+}
+.yardage small {
+  display: inline;
+  font-size: 10px;
+  color: #c3d1c4;
+  margin-left: 4px;
+}
+.player-card {
+  border: 1px solid #e0e5db;
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.player-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+.player-heading strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.player-heading > span {
+  font-size: 10px;
+  color: #7b877b;
+}
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #edf0e5;
+  border-radius: 50%;
+  width: 27px;
+  height: 27px;
+  font-size: 10px;
+}
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+.stepper > button {
+  width: 60px;
+  height: 60px;
+  font-size: 30px;
+  border-radius: 50%;
+  background: #f4f6ef;
+  border: 1px solid #e4e8de;
+}
+.stepper > button:last-child {
+  background: #deedab;
+  border-color: #deedab;
+}
+.stepper > div {
+  text-align: center;
+}
+.stepper strong {
+  font-family: Manrope, sans-serif;
+  font-size: 50px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+.stepper small {
+  font-size: 8px;
+  letter-spacing: 1.1px;
+  color: #83907e;
+  margin-top: 3px;
+}
+.mark-par {
+  font-size: 10px;
+  color: #72826e;
+  display: block;
+  margin: 8px auto -6px;
+  min-height: 36px;
+}
+.hole-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 22px;
+  gap: 10px;
+}
+.hole-nav button {
+  font-size: 12px;
+  padding: 12px 15px;
+}
+.hole-nav > span {
+  font-size: 10px;
+  color: #8a9484;
+}
+.round-progress {
+  height: 4px;
+  background: #e3e8db;
+  border-radius: 3px;
+  margin-top: 22px;
+  overflow: hidden;
+}
+.round-progress > div {
+  height: 100%;
+  background: #88a35a;
+}
+.progress-label {
+  text-align: center;
+  font-size: 8px;
+  letter-spacing: 1.3px;
+  color: #8a9484;
+  margin-top: 10px;
+}
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.checkbox input {
+  width: 18px;
+  min-height: 18px;
+  margin: 0;
+}
+.par-editor {
+  padding: 0 16px 16px;
+  background: #e9ede4;
+  border-radius: 12px;
+}
+.subtotal {
+  background: #edf1e6;
+  font-weight: 700;
+}
+.subtotal small {
+  margin-top: 4px;
+}
+.warning {
+  padding: 16px;
+  background: #fff1d1;
+  color: #7f4a1b;
+}
+@media (max-width: 480px) {
+  header {
+    padding: 12px 20px;
+  }
+  .local {
+    display: none;
+  }
+  main {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .scorecard .section-heading {
+    margin-top: 22px;
+  }
+  .brand-light {
+    font-size: 11px;
+  }
+}
