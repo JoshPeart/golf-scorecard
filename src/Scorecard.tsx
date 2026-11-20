@@ -181,13 +181,48 @@ export function Scorecard({
                 <div className="player-heading">
                   <strong>
                     <span className="avatar">{name[0]?.toUpperCase()}</span>
-                    {name}
+                    <span className="player-name">{name}</span>
                   </strong>
                   <span>
                     {s.played
-                      ? `${s.total} total · ${relative(s.toPar)}`
+                      ? `${s.total} · ${relative(s.toPar)} thru ${s.played}`
                       : "Ready to tee off"}
                   </span>
+                  {score == null ? (
+                    <button
+                      className="text-button mark-par"
+                      onClick={() =>
+                        onChange({
+                          ...round,
+                          scores: round.scores.map((s, i) =>
+                            i === p
+                              ? s.map((v, h) =>
+                                  h === hole ? round.pars[hole] : v,
+                                )
+                              : s,
+                          ),
+                        })
+                      }
+                    >
+                      Mark par ({round.pars[hole]})
+                    </button>
+                  ) : (
+                    <button
+                      className="text-button mark-par"
+                      onClick={() =>
+                        onChange({
+                          ...round,
+                          scores: round.scores.map((s, i) =>
+                            i === p
+                              ? s.map((v, h) => (h === hole ? null : v))
+                              : s,
+                          ),
+                        })
+                      }
+                    >
+                      Clear score
+                    </button>
+                  )}
                 </div>
                 <div className="stepper">
                   <button
@@ -211,41 +246,6 @@ export function Scorecard({
                     +
                   </button>
                 </div>
-                {score == null ? (
-                  <button
-                    className="text-button mark-par"
-                    onClick={() =>
-                      onChange({
-                        ...round,
-                        scores: round.scores.map((s, i) =>
-                          i === p
-                            ? s.map((v, h) =>
-                                h === hole ? round.pars[hole] : v,
-                              )
-                            : s,
-                        ),
-                      })
-                    }
-                  >
-                    Mark par ({round.pars[hole]})
-                  </button>
-                ) : (
-                  <button
-                    className="text-button mark-par"
-                    onClick={() =>
-                      onChange({
-                        ...round,
-                        scores: round.scores.map((s, i) =>
-                          i === p
-                            ? s.map((v, h) => (h === hole ? null : v))
-                            : s,
-                        ),
-                      })
-                    }
-                  >
-                    Clear hole
-                  </button>
-                )}
               </section>
             );
           })}

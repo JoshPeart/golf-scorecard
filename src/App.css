@@ -272,30 +272,40 @@ main {
   margin-left: 4px;
 }
 .player-card {
-  border: 1px solid #e0e5db;
-  background: #fff;
-  border-radius: 14px;
-  padding: 16px;
-  margin-bottom: 12px;
-}
-.player-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
-  gap: 12px;
+  gap: 8px;
+  border: 1px solid #e0e5db;
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px 12px 10px 14px;
+  margin-bottom: 10px;
+}
+.player-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  font-size: 13px;
 }
 .player-heading strong {
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
-  overflow-wrap: anywhere;
+  max-width: 100%;
 }
 .player-heading > span {
-  font-size: 10px;
+  font-size: 11px;
   color: #7b877b;
-  flex-shrink: 0;
+  margin: 2px 0 0 35px;
+  white-space: nowrap;
+}
+.player-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .avatar {
   flex-shrink: 0;
@@ -311,13 +321,14 @@ main {
 .stepper {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-top: 12px;
+  flex-shrink: 0;
+  gap: 4px;
 }
 .stepper > button {
-  width: 60px;
-  height: 60px;
-  font-size: 30px;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  font-size: 26px;
   border-radius: 50%;
   background: #f4f6ef;
   border: 1px solid #e4e8de;
@@ -328,25 +339,27 @@ main {
 }
 .stepper > div {
   text-align: center;
+  width: 58px;
 }
 .stepper strong {
   font-family: Manrope, sans-serif;
-  font-size: 50px;
+  font-size: 36px;
   font-weight: 500;
-  line-height: 1.25;
+  line-height: 1.1;
 }
 .stepper small {
   font-size: 8px;
-  letter-spacing: 1.1px;
+  letter-spacing: 0.6px;
   color: #83907e;
-  margin-top: 3px;
+  margin-top: 2px;
 }
 .mark-par {
-  font-size: 10px;
+  font-size: 11px;
   color: #72826e;
-  display: block;
-  margin: 8px auto -6px;
+  margin-left: 35px;
+  padding: 0;
   min-height: 44px;
+  white-space: nowrap;
 }
 .hole-nav {
   display: flex;
@@ -426,5 +439,21 @@ main {
   }
   .brand-light {
     font-size: 11px;
+  }
+}
+@media (max-width: 360px) {
+  .stepper > button {
+    width: 44px;
+    height: 44px;
+  }
+  .stepper > div {
+    width: 46px;
+  }
+  .stepper strong {
+    font-size: 30px;
+  }
+  .player-heading > span,
+  .mark-par {
+    margin-left: 0;
   }
 }
