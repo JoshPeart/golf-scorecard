@@ -195,7 +195,7 @@ export default function App() {
           onDelete={() => {
             setData((d) => ({
               ...d,
-              rounds: d.rounds.filter((r) => r.id !== roundId),
+              rounds: d.rounds.filter((r) => r.id !== round.id),
             }));
             setScreen("home");
           }}
