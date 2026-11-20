@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Course, Round } from "./types";
 import { relative, segment } from "./scoring";
 import { switchTee } from "./rounds";
+import { roundDetails } from "./roundDetails";
 export function Scorecard({
   round,
   course,
@@ -47,6 +48,7 @@ export function Scorecard({
     .sort(
       (a, b) => (b.played ? 1 : 0) - (a.played ? 1 : 0) || a.toPar - b.toPar,
     );
+  const details = roundDetails(round, course);
   const canUpdateTee =
     !!course && courseHole < course.holes && tee?.pars[courseHole] != null;
   function navigate(nextHole: number, nextSummary: boolean) {
@@ -97,7 +99,7 @@ export function Scorecard({
                   "Switch tees? New pars apply to the current and later holes only if no player has scored them. Scored holes and earlier holes keep their par.",
                 )
               ) {
-                const updated = switchTee(round, next, hole);
+                const updated = switchTee(round, next, hole, course);
                 onChange(updated);
                 setEditing(false);
                 setPar(updated.pars[hole]);
@@ -105,7 +107,7 @@ export function Scorecard({
               }
             }}
           >
-            {!tee && <option value={round.teeId}>Removed tee</option>}
+            {!tee && <option value={round.teeId}>{details.teeName}</option>}
             {course.tees.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}
@@ -113,11 +115,11 @@ export function Scorecard({
             ))}
           </select>
         ) : (
-          tee?.name || "Removed tee"
+          details.teeName
         )}{" "}
         tees
       </div>
-      <h1 className="course-title">{course?.name || "Deleted course"}</h1>
+      <h1 className="course-title">{details.courseName}</h1>
       <div className="tabs">
         <button
           className={!summary ? "active" : ""}
@@ -154,7 +156,7 @@ export function Scorecard({
                 PAR <b>{round.pars[hole]}</b> <span>✎</span>
               </button>
               <span className="yardage">
-                {tee?.yardages?.[courseHole] ?? "—"} <small>YDS</small>
+                {details.yardages?.[hole] ?? "—"} <small>YDS</small>
               </span>
             </div>
           </div>

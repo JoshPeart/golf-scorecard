@@ -1,4 +1,5 @@
 import type { Course, Round, Tee } from "./types";
+import { snapshotTee } from "./roundDetails";
 
 export type RoundLength = "18" | "front" | "back";
 
@@ -14,6 +15,7 @@ export function createRound(
     id: crypto.randomUUID(),
     courseId: course.id,
     teeId: tee.id,
+    ...snapshotTee(course, tee, startHole, holes),
     date: new Date().toISOString(),
     players,
     startHole,
@@ -22,10 +24,21 @@ export function createRound(
   };
 }
 
-export function switchTee(round: Round, tee: Tee, hole: number): Round {
+export function switchTee(
+  round: Round,
+  tee: Tee,
+  hole: number,
+  course?: Course,
+): Round {
   return {
     ...round,
     teeId: tee.id,
+    ...snapshotTee(
+      { name: course?.name ?? round.courseName },
+      tee,
+      round.startHole ?? 0,
+      round.pars.length,
+    ),
     pars: round.pars.map((par, i) =>
       i >= hole &&
       round.scores.every((scores) => scores[i] == null)
