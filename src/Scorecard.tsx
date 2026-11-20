@@ -51,7 +51,7 @@ export function Scorecard({
       (a, b) => (b.played ? 1 : 0) - (a.played ? 1 : 0) || a.toPar - b.toPar,
     );
   const canUpdateTee =
-    !!course && hole < course.holes && tee?.pars[hole] != null;
+    !!course && courseHole < course.holes && tee?.pars[courseHole] != null;
   function navigate(nextHole: number, nextSummary: boolean) {
     moved.current = nextHole !== hole || nextSummary !== summary;
     setEditing(false);
@@ -101,9 +101,10 @@ export function Scorecard({
                   "Switch tees? New pars apply to the current and later holes only if no player has scored them. Scored holes and earlier holes keep their par.",
                 )
               ) {
-                onChange(switchTee(round, next, hole));
+                const updated = switchTee(round, next, hole);
+                onChange(updated);
                 setEditing(false);
-                setPar(next.pars[courseHole] ?? round.pars[hole]);
+                setPar(updated.pars[hole]);
                 setAlso(false);
               }
             }}
