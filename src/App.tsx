@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import type { Course, Round } from "./types";
-import { load, save } from "./storage";
+import {
+  load,
+  save,
+  loadActiveRound,
+  saveActiveRound,
+  defaultRoundLocation,
+} from "./storage";
 import { relative, segment } from "./scoring";
 import { CourseEditor } from "./CourseEditor";
 import { Scorecard } from "./Scorecard";
@@ -8,16 +14,19 @@ import "./App.css";
 
 export default function App() {
   const [data, setData] = useState(load);
+  const [active, setActive] = useState(() => loadActiveRound(data));
   const [screen, setScreen] = useState<"home" | "course" | "new" | "round">(
-    "home",
+    active ? "round" : "home",
   );
   const [courseId, setCourseId] = useState("");
-  const [roundId, setRoundId] = useState("");
   const [storageError, setStorageError] = useState(false);
   useEffect(() => {
     setStorageError(!save(data));
   }, [data]);
-  const round = data.rounds.find((r) => r.id === roundId);
+  const round = data.rounds.find((r) => r.id === active?.roundId);
+  useEffect(() => {
+    saveActiveRound(screen === "round" && round ? active : null);
+  }, [active, screen, round]);
   function updateRound(next: Round) {
     setData((d) => ({
       ...d,
@@ -78,7 +87,7 @@ export default function App() {
                 className="list-card"
                 key={r.id}
                 onClick={() => {
-                  setRoundId(r.id);
+                  setActive(defaultRoundLocation(r));
                   setScreen("round");
                 }}
               >
@@ -165,13 +174,18 @@ export default function App() {
           }}
           onStart={(r) => {
             setData((d) => ({ ...d, rounds: [...d.rounds, r] }));
-            setRoundId(r.id);
+            setActive(defaultRoundLocation(r));
             setScreen("round");
           }}
         />
       )}
-      {screen === "round" && round && (
+      {screen === "round" && round && active && (
         <Scorecard
+          hole={active.hole}
+          summary={active.summary}
+          onNavigate={(hole, summary) =>
+            setActive({ ...active, hole, summary })
+          }
           round={round}
           course={data.courses.find((c) => c.id === round.courseId)}
           onChange={updateRound}
