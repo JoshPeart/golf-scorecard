@@ -138,6 +138,9 @@ export default function App() {
         <CourseEditor
           key={courseId}
           course={data.courses.find((c) => c.id === courseId)}
+          usedTeeIds={data.rounds
+            .filter((r) => r.courseId === courseId)
+            .map((r) => r.teeId)}
           onSave={(c) => {
             updateCourse(c);
             setScreen("home");
