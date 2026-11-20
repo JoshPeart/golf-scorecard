@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { copyVisiblePars, courseToSave, resizeDraft } from "./courseDraft";
+import {
+  copyVisiblePars,
+  courseToSave,
+  isCourseDirty,
+  resizeDraft,
+} from "./courseDraft";
 import type { Course } from "./types";
 
 const course: Course = {
@@ -17,6 +22,34 @@ const course: Course = {
 };
 
 describe("course drafts", () => {
+  it("ignores hidden holes after a nine-hole round trip but detects saved edits", () => {
+    const nine = courseToSave({ ...course, holes: 9 })!;
+    const restored = resizeDraft(resizeDraft(nine, 18), 9);
+    expect(isCourseDirty(restored, nine)).toBe(false);
+    expect(isCourseDirty({ ...restored, name: "Changed" }, nine)).toBe(true);
+    expect(
+      isCourseDirty(
+        {
+          ...restored,
+          tees: [
+            {
+              ...restored.tees[0],
+              pars: [3, ...restored.tees[0].pars.slice(1)],
+            },
+          ],
+        },
+        nine,
+      ),
+    ).toBe(true);
+    expect(isCourseDirty({ ...restored, name: "" }, nine)).toBe(true);
+    expect(
+      isCourseDirty(
+        { ...restored, tees: [{ ...restored.tees[0], name: "" }] },
+        nine,
+      ),
+    ).toBe(true);
+    expect(isCourseDirty(resizeDraft(nine, 18), nine)).toBe(true);
+  });
   it("copies only visible pars and preserves the destination back nine", () => {
     const destination = course.tees[0];
     const source = { ...destination, pars: Array(18).fill(3) };

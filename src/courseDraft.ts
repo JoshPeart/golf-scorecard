@@ -31,6 +31,10 @@ export function resizeDraft(course: Course, holes: 9 | 18): Course {
 export function courseToSave(draft: Course): Course | null {
   if (!draft.name.trim() || draft.tees.some((tee) => !tee.name.trim()))
     return null;
+  return normalizeCourse(draft);
+}
+
+export function normalizeCourse(draft: Course): Course {
   return {
     ...draft,
     name: draft.name.trim(),
@@ -41,4 +45,11 @@ export function courseToSave(draft: Course): Course | null {
       yardages: tee.yardages?.slice(0, draft.holes),
     })),
   };
+}
+
+export function isCourseDirty(draft: Course, initial: Course): boolean {
+  return (
+    JSON.stringify(normalizeCourse(draft)) !==
+    JSON.stringify(normalizeCourse(initial))
+  );
 }

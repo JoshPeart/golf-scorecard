@@ -1,6 +1,11 @@
 import { useState } from "react";
 import type { Course, Tee } from "./types";
-import { copyVisiblePars, courseToSave, resizeDraft } from "./courseDraft";
+import {
+  copyVisiblePars,
+  courseToSave,
+  isCourseDirty,
+  resizeDraft,
+} from "./courseDraft";
 const newTee = (holes: number): Tee => ({
   id: crypto.randomUUID(),
   name: "Yellow",
@@ -26,7 +31,7 @@ export function CourseEditor({
       : { id: crypto.randomUUID(), name: "", holes: 18, tees: [newTee(18)] },
   );
   const [draft, setDraft] = useState(initialDraft);
-  const dirty = JSON.stringify(draft) !== JSON.stringify(initialDraft);
+  const dirty = isCourseDirty(draft, initialDraft);
   function teeChange(id: string, patch: Partial<Tee>) {
     setDraft((d) => ({
       ...d,
