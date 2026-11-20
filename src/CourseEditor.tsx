@@ -162,6 +162,9 @@ export function CourseEditor({
         ))}
         <h2>Hole details</h2>
         <p className="muted">Pars belong to each tee. Yardages are optional.</p>
+        {draft.tees.length > 1 && (
+          <p className="muted tee-scroll-hint">More tees? Scroll the table →</p>
+        )}
         <div className="table-scroll hole-grid">
           <table>
             <thead>

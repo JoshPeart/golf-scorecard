@@ -71,7 +71,7 @@ export function Scorecard({
     });
   }
   return (
-    <main className="scorecard">
+    <main className={`scorecard${!summary ? " playing" : ""}`}>
       <div className="round-top">
         <button className="text-button" onClick={onBack}>
           ← Rounds
