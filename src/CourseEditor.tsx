@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Course, Tee } from "./types";
+import { courseToSave, resizeDraft } from "./courseDraft";
 const newTee = (holes: number): Tee => ({
   id: crypto.randomUUID(),
   name: "Yellow",
@@ -11,17 +12,21 @@ export function CourseEditor({
   onSave,
   onCancel,
   onDelete,
+  usedTeeIds = [],
 }: {
   course?: Course;
   onSave: (c: Course) => void;
   onCancel: () => void;
   onDelete: () => void;
+  usedTeeIds?: string[];
 }) {
-  const [draft, setDraft] = useState<Course>(() =>
+  const [initialDraft] = useState<Course>(() =>
     course
       ? structuredClone(course)
       : { id: crypto.randomUUID(), name: "", holes: 18, tees: [newTee(18)] },
   );
+  const [draft, setDraft] = useState(initialDraft);
+  const dirty = JSON.stringify(draft) !== JSON.stringify(initialDraft);
   function teeChange(id: string, patch: Partial<Tee>) {
     setDraft((d) => ({
       ...d,
@@ -30,7 +35,12 @@ export function CourseEditor({
   }
   return (
     <main>
-      <button className="text-button" onClick={onCancel}>
+      <button
+        className="text-button"
+        onClick={() => {
+          if (!dirty || confirm("Discard unsaved course changes?")) onCancel();
+        }}
+      >
         ← Cancel
       </button>
       <div className="eyebrow">COURSE NOTEBOOK</div>
@@ -38,7 +48,8 @@ export function CourseEditor({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onSave({ ...draft, name: draft.name.trim() });
+          const course = courseToSave(draft);
+          if (course) onSave(course);
         }}
       >
         <label>
@@ -57,18 +68,7 @@ export function CourseEditor({
             value={draft.holes}
             onChange={(e) => {
               const holes = Number(e.target.value) as 9 | 18;
-              setDraft({
-                ...draft,
-                holes,
-                tees: draft.tees.map((t) => ({
-                  ...t,
-                  pars: Array.from({ length: holes }, (_, i) => t.pars[i] ?? 4),
-                  yardages: Array.from(
-                    { length: holes },
-                    (_, i) => t.yardages?.[i] ?? null,
-                  ),
-                })),
-              });
+              setDraft(resizeDraft(draft, holes));
             }}
           >
             <option>9</option>
@@ -103,6 +103,7 @@ export function CourseEditor({
               Name
               <input
                 required
+                pattern=".*\S.*"
                 value={t.name}
                 onChange={(e) => teeChange(t.id, { name: e.target.value })}
               />
@@ -134,12 +135,17 @@ export function CourseEditor({
               type="button"
               className="danger text-button"
               disabled={draft.tees.length === 1}
-              onClick={() =>
+              onClick={() => {
+                if (
+                  usedTeeIds.includes(t.id) &&
+                  !confirm("Remove this tee? Existing rounds use it.")
+                )
+                  return;
                 setDraft({
                   ...draft,
                   tees: draft.tees.filter((x) => x.id !== t.id),
-                })
-              }
+                });
+              }}
             >
               Remove tee
             </button>
@@ -192,7 +198,12 @@ export function CourseEditor({
                           onChange={(e) =>
                             teeChange(t.id, {
                               yardages: Array.from(
-                                { length: draft.holes },
+                                {
+                                  length: Math.max(
+                                    draft.holes,
+                                    t.yardages?.length ?? 0,
+                                  ),
+                                },
                                 (_, h) =>
                                   h === i
                                     ? e.target.value
