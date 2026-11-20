@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Course, Tee } from "./types";
-import { courseToSave, resizeDraft } from "./courseDraft";
+import { copyVisiblePars, courseToSave, resizeDraft } from "./courseDraft";
 const newTee = (holes: number): Tee => ({
   id: crypto.randomUUID(),
   name: "Yellow",
@@ -115,9 +115,11 @@ export function CourseEditor({
                 value=""
                 onChange={(e) =>
                   teeChange(t.id, {
-                    pars: [
-                      ...draft.tees.find((x) => x.id === e.target.value)!.pars,
-                    ],
+                    pars: copyVisiblePars(
+                      t,
+                      draft.tees.find((x) => x.id === e.target.value)!,
+                      draft.holes,
+                    ),
                   })
                 }
               >

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { courseToSave, resizeDraft } from "./courseDraft";
+import { copyVisiblePars, courseToSave, resizeDraft } from "./courseDraft";
 import type { Course } from "./types";
 
 const course: Course = {
@@ -17,6 +17,19 @@ const course: Course = {
 };
 
 describe("course drafts", () => {
+  it("copies only visible pars and preserves the destination back nine", () => {
+    const destination = course.tees[0];
+    const source = { ...destination, pars: Array(18).fill(3) };
+    expect(copyVisiblePars(destination, source, 9)).toEqual([
+      ...Array(9).fill(3),
+      ...Array(9).fill(5),
+    ]);
+    expect(copyVisiblePars(destination, source, 18)).toEqual(source.pars);
+    expect(copyVisiblePars(destination, { ...source, pars: [] }, 9)).toEqual(
+      destination.pars,
+    );
+    expect(destination.pars).toEqual(Array(18).fill(5));
+  });
   it("retains hidden back-nine values until save without mutating the source", () => {
     const nine = resizeDraft(course, 9);
     expect(nine.holes).toBe(9);

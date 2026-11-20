@@ -1,4 +1,14 @@
-import type { Course } from "./types";
+import type { Course, Tee } from "./types";
+
+export function copyVisiblePars(
+  destination: Tee,
+  source: Tee,
+  holes: number,
+): number[] {
+  return destination.pars.map((par, hole) =>
+    hole < holes ? (source.pars[hole] ?? par) : par,
+  );
+}
 
 export function resizeDraft(course: Course, holes: 9 | 18): Course {
   return {
