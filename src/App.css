@@ -157,6 +157,12 @@ main {
   margin-top: 20px;
   font-size: 9px;
 }
+.tee-select {
+  display: inline-block;
+  width: auto;
+  margin: 0;
+  padding: 6px 10px;
+}
 .course-title {
   font-size: 27px;
   letter-spacing: -1px;
