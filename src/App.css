@@ -543,3 +543,34 @@ main {
     margin-left: 0;
   }
 }
+@media (max-width: 480px) and (max-height: 700px) {
+  .app:has(.scorecard) header {
+    padding-block: 4px;
+  }
+  .scorecard {
+    padding-top: 6px;
+  }
+  .scorecard > .eyebrow {
+    margin: 8px 0 6px;
+  }
+  .scorecard .course-title {
+    margin-bottom: 8px;
+  }
+  .scorecard .hole-hero {
+    margin-top: 12px;
+    padding: 12px 20px;
+  }
+  .scorecard .hole-number {
+    margin: 4px 0;
+  }
+  .scorecard .hole-number strong {
+    font-size: 64px;
+    letter-spacing: -3px;
+  }
+  .scorecard .hole-meta {
+    padding-top: 4px;
+  }
+  .scorecard .section-heading {
+    margin-top: 12px;
+  }
+}
