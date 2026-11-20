@@ -8,6 +8,9 @@ export function Scorecard({
   onCourseChange,
   onBack,
   saved,
+  hole,
+  summary,
+  onNavigate,
 }: {
   round: Round;
   course?: Course;
@@ -15,16 +18,10 @@ export function Scorecard({
   onCourseChange: (c: Course) => void;
   onBack: () => void;
   saved: boolean;
+  hole: number;
+  summary: boolean;
+  onNavigate: (hole: number, summary: boolean) => void;
 }) {
-  const [hole, setHole] = useState(() => {
-    const next = round.pars.findIndex((_, h) =>
-      round.scores.some((s) => s[h] == null),
-    );
-    return next === -1 ? round.pars.length - 1 : next;
-  });
-  const [summary, setSummary] = useState(() =>
-    round.scores.every((s) => s.every((n) => n != null)),
-  );
   const heroRef = useRef<HTMLDivElement>(null);
   const moved = useRef(false);
   useEffect(() => {
@@ -45,8 +42,7 @@ export function Scorecard({
     setEditing(false);
     setPar(round.pars[nextHole]);
     setAlso(false);
-    setHole(nextHole);
-    setSummary(nextSummary);
+    onNavigate(nextHole, nextSummary);
   }
   function stroke(player: number, delta: number) {
     onChange({
