@@ -90,6 +90,9 @@ export default function App() {
                     · {new Date(r.date).toLocaleDateString()} · {s.played}/
                     {r.pars.length} holes
                   </small>
+                  {r.players.length > 1 && (
+                    <small>with {r.players.slice(1).join(", ")}</small>
+                  )}
                 </span>
                 <b>{s.played ? `${s.total} (${relative(s.toPar)})` : "—"} →</b>
               </button>

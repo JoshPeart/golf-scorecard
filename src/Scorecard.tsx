@@ -37,9 +37,16 @@ export function Scorecard({
   const [par, setPar] = useState(4);
   const [also, setAlso] = useState(false);
   const tee = course?.tees.find((t) => t.id === round.teeId);
+  const complete = round.pars.filter((_, h) =>
+    round.scores.every((s) => s[h] != null),
+  ).length;
+  const standings = round.players
+    .map((name, p) => ({ name, p, ...segment(round.scores[p], round.pars) }))
+    .sort(
+      (a, b) => (b.played ? 1 : 0) - (a.played ? 1 : 0) || a.toPar - b.toPar,
+    );
   const canUpdateTee =
     !!course && hole < course.holes && tee?.pars[hole] != null;
-  const first = segment(round.scores[0], round.pars);
   function navigate(nextHole: number, nextSummary: boolean) {
     moved.current = nextHole !== hole || nextSummary !== summary;
     setEditing(false);
@@ -271,15 +278,35 @@ export function Scorecard({
           </div>
           <div className="round-progress">
             <div
-              style={{ width: `${(first.played / round.pars.length) * 100}%` }}
+              style={{ width: `${(complete / round.pars.length) * 100}%` }}
             />
           </div>
           <p className="progress-label">
-            {first.played} OF {round.pars.length} HOLES SCORED · ME
+            {complete} OF {round.pars.length} HOLES SCORED
           </p>
         </>
       ) : (
         <>
+          {round.players.length > 1 && (
+            <ol className="standings" aria-label="Totals">
+              {standings.map((s) => (
+                <li
+                  key={s.p}
+                  className={
+                    s.played && s.toPar === standings[0].toPar ? "leader" : ""
+                  }
+                >
+                  <span className="player-name">{s.name}</span>
+                  <b>{s.played ? s.total : "—"}</b>
+                  <small>
+                    {s.played
+                      ? `${relative(s.toPar)} · ${s.played === round.pars.length ? "F" : `thru ${s.played}`}`
+                      : "Not started"}
+                  </small>
+                </li>
+              ))}
+            </ol>
+          )}
           <h2>Round overview</h2>
           <p className="muted">
             To-par counts only scored holes. Tap a hole to play it.
@@ -291,7 +318,9 @@ export function Scorecard({
                   <th>Hole</th>
                   <th>Par</th>
                   {round.players.map((n, p) => (
-                    <th key={p}>{n}</th>
+                    <th key={p} className="player-col" title={n}>
+                      {n}
+                    </th>
                   ))}
                 </tr>
               </thead>

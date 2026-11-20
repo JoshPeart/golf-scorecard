@@ -411,6 +411,59 @@ main {
   background: #e9ede4;
   border-radius: 12px;
 }
+.standings {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 8px;
+}
+.standings li {
+  background: #fff;
+  border: 1px solid #e0e5db;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  min-width: 0;
+}
+.standings li.leader {
+  background: #254d3c;
+  border-color: #254d3c;
+  color: #fff;
+}
+.standings .player-name {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.standings b {
+  display: block;
+  font-family: Manrope, sans-serif;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.standings small {
+  font-size: 11px;
+  opacity: 0.75;
+}
+.scorecard th,
+.scorecard td {
+  padding: 8px 6px;
+}
+.scorecard th .text-button {
+  min-height: 32px;
+  padding: 0 8px;
+}
+.player-col {
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .subtotal {
   background: #edf1e6;
   font-weight: 700;
