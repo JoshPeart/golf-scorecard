@@ -275,7 +275,7 @@ export function Scorecard({
                 else navigate(hole + 1, false);
               }}
             >
-              {hole === round.pars.length - 1 ? "Finish ↗" : "Next hole →"}
+              {hole === round.pars.length - 1 ? "Summary ↗" : "Next hole →"}
             </button>
           </div>
           <div className="round-progress">
