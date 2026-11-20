@@ -7,6 +7,7 @@ export function Scorecard({
   onChange,
   onCourseChange,
   onBack,
+  onDelete,
   saved,
 }: {
   round: Round;
@@ -14,6 +15,7 @@ export function Scorecard({
   onChange: (r: Round) => void;
   onCourseChange: (c: Course) => void;
   onBack: () => void;
+  onDelete: () => void;
   saved: boolean;
 }) {
   const [hole, setHole] = useState(() => {
@@ -359,6 +361,15 @@ export function Scorecard({
               placeholder="A great day on the course…"
             />
           </label>
+          <button
+            className="danger wide"
+            onClick={() => {
+              if (confirm("Delete this round? This cannot be undone."))
+                onDelete();
+            }}
+          >
+            Delete round
+          </button>
         </>
       )}
     </main>
