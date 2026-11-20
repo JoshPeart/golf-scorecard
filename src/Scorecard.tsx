@@ -23,6 +23,13 @@ export function Scorecard({
   const [also, setAlso] = useState(false);
   const tee = course?.tees.find((t) => t.id === round.teeId);
   const first = segment(round.scores[0], round.pars);
+  function navigate(nextHole: number, nextSummary: boolean) {
+    setEditing(false);
+    setPar(round.pars[nextHole]);
+    setAlso(false);
+    setHole(nextHole);
+    setSummary(nextSummary);
+  }
   function stroke(player: number, delta: number) {
     onChange({
       ...round,
@@ -56,13 +63,13 @@ export function Scorecard({
       <div className="tabs">
         <button
           className={!summary ? "active" : ""}
-          onClick={() => setSummary(false)}
+          onClick={() => navigate(hole, false)}
         >
           Play hole
         </button>
         <button
           className={summary ? "active" : ""}
-          onClick={() => setSummary(true)}
+          onClick={() => navigate(hole, true)}
         >
           Scorecard
         </button>
@@ -227,10 +234,7 @@ export function Scorecard({
           <div className="hole-nav">
             <button
               disabled={hole === 0}
-              onClick={() => {
-                setHole(hole - 1);
-                setEditing(false);
-              }}
+              onClick={() => navigate(hole - 1, false)}
             >
               ← Previous
             </button>
@@ -240,9 +244,8 @@ export function Scorecard({
             <button
               className="primary"
               onClick={() => {
-                if (hole === round.pars.length - 1) setSummary(true);
-                else setHole(hole + 1);
-                setEditing(false);
+                if (hole === round.pars.length - 1) navigate(hole, true);
+                else navigate(hole + 1, false);
               }}
             >
               {hole === round.pars.length - 1 ? "Finish ↗" : "Next hole →"}
@@ -281,8 +284,7 @@ export function Scorecard({
                       <button
                         className="text-button"
                         onClick={() => {
-                          setHole(h);
-                          setSummary(false);
+                          navigate(h, false);
                         }}
                       >
                         {h + 1} ↗
