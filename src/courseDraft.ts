@@ -42,7 +42,10 @@ export function normalizeCourse(draft: Course): Course {
       ...tee,
       name: tee.name.trim(),
       pars: tee.pars.slice(0, draft.holes),
-      yardages: tee.yardages?.slice(0, draft.holes),
+      yardages: Array.from(
+        { length: draft.holes },
+        (_, hole) => tee.yardages?.[hole] ?? null,
+      ),
     })),
   };
 }

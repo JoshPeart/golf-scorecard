@@ -26,6 +26,16 @@ describe("course drafts", () => {
     const nine = courseToSave({ ...course, holes: 9 })!;
     const restored = resizeDraft(resizeDraft(nine, 18), 9);
     expect(isCourseDirty(restored, nine)).toBe(false);
+    const withoutYardages = {
+      ...nine,
+      tees: [{ ...nine.tees[0], yardages: undefined }],
+    };
+    expect(
+      isCourseDirty(
+        resizeDraft(resizeDraft(withoutYardages, 18), 9),
+        withoutYardages,
+      ),
+    ).toBe(false);
     expect(isCourseDirty({ ...restored, name: "Changed" }, nine)).toBe(true);
     expect(
       isCourseDirty(
