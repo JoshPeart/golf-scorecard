@@ -61,6 +61,7 @@ export function CourseEditor({
           Course name
           <input
             required
+            maxLength={100}
             value={draft.name}
             onChange={(e) => setDraft({ ...draft, name: e.target.value })}
             placeholder="e.g. Meadowbrook Golf Club"
@@ -109,6 +110,7 @@ export function CourseEditor({
               <input
                 required
                 pattern=".*\S.*"
+                maxLength={40}
                 value={t.name}
                 onChange={(e) => teeChange(t.id, { name: e.target.value })}
               />
@@ -160,7 +162,7 @@ export function CourseEditor({
         ))}
         <h2>Hole details</h2>
         <p className="muted">Pars belong to each tee. Yardages are optional.</p>
-        <div className="table-scroll">
+        <div className="table-scroll hole-grid">
           <table>
             <thead>
               <tr>
@@ -197,6 +199,7 @@ export function CourseEditor({
                         </select>
                         <input
                           type="number"
+                          inputMode="numeric"
                           min="1"
                           max="1500"
                           aria-label={`Hole ${i + 1} ${t.name} yardage`}

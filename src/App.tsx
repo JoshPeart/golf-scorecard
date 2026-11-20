@@ -275,6 +275,7 @@ function NewRound({
           <label>
             Playing partners <span className="muted">(optional)</span>
             <input
+              maxLength={200}
               value={names}
               onChange={(e) => setNames(e.target.value)}
               placeholder="Alex, Sam"
