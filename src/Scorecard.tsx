@@ -22,6 +22,7 @@ export function Scorecard({
   const [par, setPar] = useState(4);
   const [also, setAlso] = useState(false);
   const tee = course?.tees.find((t) => t.id === round.teeId);
+  const canUpdateTee = !!course && hole < course.holes && tee?.pars[hole] != null;
   const first = segment(round.scores[0], round.pars);
   function navigate(nextHole: number, nextSummary: boolean) {
     setEditing(false);
@@ -109,7 +110,7 @@ export function Scorecard({
                   ...round,
                   pars: round.pars.map((p, i) => (i === hole ? par : p)),
                 });
-                if (also && course && tee)
+                if (also && canUpdateTee && course && tee)
                   onCourseChange({
                     ...course,
                     tees: course.tees.map((t) =>
@@ -135,7 +136,7 @@ export function Scorecard({
                   ))}
                 </select>
               </label>
-              {tee && (
+              {canUpdateTee && (
                 <label className="checkbox">
                   <input
                     type="checkbox"
