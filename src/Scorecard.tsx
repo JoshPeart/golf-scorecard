@@ -110,7 +110,7 @@ export function Scorecard({
             {!tee && <option value={round.teeId}>{details.teeName}</option>}
             {course.tees.map((t) => (
               <option key={t.id} value={t.id}>
-                {t.name}
+                {t.id === round.teeId ? details.teeName : t.name}
               </option>
             ))}
           </select>
