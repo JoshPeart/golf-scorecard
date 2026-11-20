@@ -182,6 +182,7 @@ main {
 }
 .hole-hero {
   margin-top: 20px;
+  scroll-margin-top: 12px;
   background: #254d3c;
   color: #fff;
   padding: 22px 24px 18px;
@@ -382,7 +383,8 @@ main {
   margin: 0;
 }
 .par-editor {
-  padding: 0 16px 16px;
+  margin-top: 12px;
+  padding: 2px 16px 16px;
   background: #e9ede4;
   border-radius: 12px;
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Course, Round } from "./types";
 import { relative, segment } from "./scoring";
 export function Scorecard({
@@ -16,15 +16,32 @@ export function Scorecard({
   onBack: () => void;
   saved: boolean;
 }) {
-  const [hole, setHole] = useState(0);
-  const [summary, setSummary] = useState(false);
+  const [hole, setHole] = useState(() => {
+    const next = round.pars.findIndex((_, h) =>
+      round.scores.some((s) => s[h] == null),
+    );
+    return next === -1 ? round.pars.length - 1 : next;
+  });
+  const [summary, setSummary] = useState(() =>
+    round.scores.every((s) => s.every((n) => n != null)),
+  );
+  const heroRef = useRef<HTMLDivElement>(null);
+  const moved = useRef(false);
+  useEffect(() => {
+    if (!moved.current) return;
+    moved.current = false;
+    if (summary) window.scrollTo(0, 0);
+    else heroRef.current?.scrollIntoView({ block: "start" });
+  }, [hole, summary]);
   const [editing, setEditing] = useState(false);
   const [par, setPar] = useState(4);
   const [also, setAlso] = useState(false);
   const tee = course?.tees.find((t) => t.id === round.teeId);
-  const canUpdateTee = !!course && hole < course.holes && tee?.pars[hole] != null;
+  const canUpdateTee =
+    !!course && hole < course.holes && tee?.pars[hole] != null;
   const first = segment(round.scores[0], round.pars);
   function navigate(nextHole: number, nextSummary: boolean) {
+    moved.current = nextHole !== hole || nextSummary !== summary;
     setEditing(false);
     setPar(round.pars[nextHole]);
     setAlso(false);
@@ -77,7 +94,7 @@ export function Scorecard({
       </div>
       {!summary ? (
         <>
-          <div className="hole-hero">
+          <div className="hole-hero" ref={heroRef}>
             <div className="eyebrow">
               {hole < 9 ? "FRONT NINE" : "BACK NINE"}{" "}
               <span> / {round.pars.length} HOLES</span>
