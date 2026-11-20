@@ -106,8 +106,13 @@ main {
   margin-top: 6px;
   line-height: 1.5;
 }
+.list-card > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .list-card b {
   font-size: 13px;
+  flex-shrink: 0;
 }
 .danger {
   color: #a54135;
@@ -169,7 +174,7 @@ main {
   width: 50%;
   border: 0;
   background: none;
-  min-height: 37px;
+  min-height: 44px;
   padding: 8px;
   color: #71806f;
   font-size: 12px;
@@ -277,17 +282,22 @@ main {
   align-items: center;
   justify-content: space-between;
   font-size: 12px;
+  gap: 12px;
 }
 .player-heading strong {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .player-heading > span {
   font-size: 10px;
   color: #7b877b;
+  flex-shrink: 0;
 }
 .avatar {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -335,7 +345,7 @@ main {
   color: #72826e;
   display: block;
   margin: 8px auto -6px;
-  min-height: 36px;
+  min-height: 44px;
 }
 .hole-nav {
   display: flex;

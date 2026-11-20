@@ -52,6 +52,7 @@ p {
   margin-top: 0;
 }
 h1 {
+  overflow-wrap: anywhere;
   font-family: Manrope, sans-serif;
   font-size: 38px;
   line-height: 1.2;
@@ -71,6 +72,7 @@ input,
 select,
 textarea {
   display: block;
+  font-size: 16px;
   width: 100%;
   margin-top: 8px;
   color: #203f35;
