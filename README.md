@@ -27,7 +27,7 @@ npm run preview -- --host 0.0.0.0 --port 4173
 
 1. Add a 9- or 18-hole course; name its tees and set each tee's pars (3–6) and optional yardages.
 2. Start a round with a course, tee and optional comma-separated partners.
-3. Use +/- to score, or **Mark par**. On an unscored hole +/- starts from par, so one tap records a birdie/bogey. Clear hole restores an unplayed score.
+3. Use +/- to score, or **Mark par**. On an unscored hole +/- starts from par, so one tap records a birdie/bogey. Clear score restores an unplayed score.
 4. Tap **PAR** to edit the round's par. Optionally also update the underlying course tee.
 5. Toggle **Scorecard** for Out/In/Total and notes. Totals include scored holes only; E means even. Nine-hole rounds show Out/Total, not an empty In.
 
