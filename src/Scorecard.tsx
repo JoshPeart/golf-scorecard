@@ -62,7 +62,10 @@ export function Scorecard({
         </button>
         <button
           className={summary ? "active" : ""}
-          onClick={() => setSummary(true)}
+          onClick={() => {
+            setEditing(false);
+            setSummary(true);
+          }}
         >
           Scorecard
         </button>
