@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Course, Round, Tee } from "./types";
 import { createRound, switchTee } from "./rounds";
+import { roundDetails } from "./roundDetails";
 
 const tee: Tee = {
   id: "yellow",
@@ -15,6 +16,17 @@ const course: Course = {
 };
 
 describe("round creation", () => {
+  it("snapshots only the played nine's yardages", () => {
+    const withYards = { ...tee, yardages: Array.from({ length: 18 }, (_, i) => 300 + i) };
+    for (const length of ["front", "back"] as const) {
+      const round = createRound(course, withYards, ["Me"], length);
+      const expected = withYards.yardages.slice(length === "back" ? 9 : 0, length === "back" ? 18 : 9);
+      expect(round.teeYardages).toEqual(expected);
+      expect(roundDetails(round).yardages).toEqual(expected);
+      expect(roundDetails(round, { ...course, tees: [withYards] }).yardages).toEqual(expected);
+    }
+    expect(createRound({ ...course, holes: 9 }, withYards, ["Me"]).teeYardages).toHaveLength(9);
+  });
   it("defaults to all 18 holes and independent blank player scores", () => {
     const round = createRound(course, tee, ["Me", "Alex"]);
     expect(round.startHole).toBe(0);
@@ -40,6 +52,24 @@ describe("round creation", () => {
 });
 
 describe("tee switching", () => {
+  it("refreshes snapshots for the switched tee and course without changing scores", () => {
+    const original = createRound(course, tee, ["Me"], "back");
+    original.scores[0][0] = 4;
+    const nextTee = { ...tee, id: "red", name: "Red", yardages: Array.from({ length: 18 }, (_, i) => 200 + i) };
+    const renamed = { ...course, name: "Renamed course", tees: [nextTee] };
+    const next = switchTee(original, nextTee, 1, renamed);
+    expect(next.courseName).toBe("Renamed course");
+    expect(next.teeName).toBe("Red");
+    expect(next.teeYardages).toEqual(nextTee.yardages.slice(9));
+    expect(next.teeYardages).not.toBe(nextTee.yardages);
+    expect(next.scores).toBe(original.scores);
+    expect(roundDetails(next)).toEqual({
+      courseName: "Renamed course",
+      teeName: "Red",
+      yardages: nextTee.yardages.slice(9),
+    });
+    expect(switchTee(next, tee, 1, course).teeYardages).toBeUndefined();
+  });
   const round: Round = {
     id: "round",
     courseId: course.id,

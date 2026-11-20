@@ -8,6 +8,7 @@ import {
   defaultRoundLocation,
 } from "./storage";
 import { relative, segment } from "./scoring";
+import { roundDetails } from "./roundDetails";
 import { CourseEditor } from "./CourseEditor";
 import { Scorecard } from "./Scorecard";
 import { createRound } from "./rounds";
@@ -84,6 +85,7 @@ export default function App() {
           {[...data.rounds].reverse().map((r) => {
             const c = data.courses.find((c) => c.id === r.courseId);
             const s = segment(r.scores[0], r.pars);
+            const details = roundDetails(r, c);
             return (
               <button
                 className="list-card"
@@ -94,12 +96,10 @@ export default function App() {
                 }}
               >
                 <span>
-                  <strong>{c?.name || "Deleted course"}</strong>
+                  <strong>{details.courseName}</strong>
                   <small>
-                    {c?.tees.find((t) => t.id === r.teeId)?.name ||
-                      "Removed tee"}{" "}
-                    · {new Date(r.date).toLocaleDateString()} · {s.played}/
-                    {r.pars.length} holes
+                    {details.teeName} · {new Date(r.date).toLocaleDateString()}{" "}
+                    · {s.played}/{r.pars.length} holes
                   </small>
                   {r.players.length > 1 && (
                     <small>with {r.players.slice(1).join(", ")}</small>

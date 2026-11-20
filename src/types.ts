@@ -15,6 +15,9 @@ export interface Round {
   id: string;
   courseId: string;
   teeId: string;
+  courseName?: string;
+  teeName?: string;
+  teeYardages?: (number | null)[];
   date: string;
   players: string[];
   pars: number[];
