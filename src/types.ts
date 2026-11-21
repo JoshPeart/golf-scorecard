@@ -9,6 +9,7 @@ export interface Tee {
   slope?: number;
   totalYardage?: number;
   strokeIndexes?: (number | null)[];
+  layoutId?: string;
 }
 export interface Course {
   id: string;
@@ -37,6 +38,7 @@ export interface Round {
   teeName?: string;
   teeYardages?: (number | null)[];
   teeStrokeIndexes?: (number | null)[];
+  teeLayoutId?: string;
   date: string;
   players: string[];
   pars: number[];

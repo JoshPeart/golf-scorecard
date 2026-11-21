@@ -99,7 +99,12 @@ describe("GolfCore provider", () => {
     expect(needsChecking(course)).not.toContain("Missing pars");
   });
   it("prefixes multiple layouts, drops empty/no-par tees and flags nonstandard counts", async () => {
-    const layout = golfcoreDetail.layouts[0];
+    const original = golfcoreDetail.layouts[0];
+    const layout = {
+      ...original,
+      holes: original.holes.slice(0, 10),
+      tees: original.tees.map((t) => ({ ...t, holes: t.holes.slice(0, 10) })),
+    };
     respond({
       ...golfcoreDetail,
       hole_count: 10,
@@ -122,6 +127,7 @@ describe("GolfCore provider", () => {
     expect(course.tees).toHaveLength(3);
     expect(course.tees[0].name).toBe("Main — Black");
     expect(course.tees[1].name).toBe("Alternate — Black");
+    expect(course.tees[0].layoutId).not.toBe(course.tees[1].layoutId);
     expect(needsChecking(course)).toContain("Unexpected hole count");
   });
   it("handles a course with no layouts or tees", async () => {

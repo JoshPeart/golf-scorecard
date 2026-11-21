@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Course, Round, Tee } from "./types";
-import { createRound, type RoundLength } from "./rounds";
+import { createRound, teeHoleCount, type RoundLength } from "./rounds";
 import {
   needsChecking,
   searchCourses,
@@ -119,6 +119,7 @@ export function NewRound({
   const picking = useRef({ id: 0 });
   const course = courses.find((c) => c.id === selectedId);
   const tee = course?.tees.find((t) => t.id === teeId) ?? course?.tees[0];
+  const holes = course && tee ? teeHoleCount(course, tee) : course?.holes;
   const searching = !!query.trim() || !!location;
   useEffect(() => {
     const pending = picking.current;
@@ -443,11 +444,7 @@ export function NewRound({
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              if (
-                !tee ||
-                tee.pars.length !== course.holes ||
-                tee.pars.some((p) => !p)
-              )
+              if (!tee || tee.pars.length !== holes || tee.pars.some((p) => !p))
                 return;
               onStart(
                 createRound(
@@ -465,7 +462,7 @@ export function NewRound({
               );
             }}
           >
-            {course.holes === 18 && (
+            {holes === 18 && (
               <label>
                 Holes to play
                 <select
@@ -493,9 +490,7 @@ export function NewRound({
             <button
               className="primary wide"
               disabled={
-                !tee ||
-                tee.pars.length !== course.holes ||
-                tee.pars.some((p) => !p)
+                !tee || tee.pars.length !== holes || tee.pars.some((p) => !p)
               }
             >
               Start round ↗

@@ -79,7 +79,13 @@ export class GolfCoreProvider implements CourseProvider {
               array(tee.holes).length ||
               num(raw.hole_count) ||
               18;
-            return mapTee(tee, this.id, count, prefix);
+            const mapped = mapTee(tee, this.id, count, prefix);
+            return mapped
+              ? {
+                  ...mapped,
+                  layoutId: `${required(raw.slug)}:${required(layout.name)}`,
+                }
+              : null;
           })
           .filter((t) => t !== null);
       });

@@ -9,6 +9,7 @@ export function snapshotTee(
   return {
     courseName: course.name,
     teeName: tee.name,
+    teeLayoutId: tee.layoutId,
     teeYardages: tee.yardages?.slice(startHole, startHole + holes),
     teeStrokeIndexes: tee.strokeIndexes?.slice(startHole, startHole + holes),
   };

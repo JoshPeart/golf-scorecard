@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Course, Round } from "./types";
 import { relative, segment } from "./scoring";
-import { switchTee } from "./rounds";
+import { roundTees, switchTee } from "./rounds";
 import { roundDetails } from "./roundDetails";
 import { parDiffersByTee } from "./courseSearch";
 export function Scorecard({
@@ -41,6 +41,7 @@ export function Scorecard({
   const [par, setPar] = useState(4);
   const [also, setAlso] = useState(false);
   const tee = course?.tees.find((t) => t.id === round.teeId);
+  const tees = course ? roundTees(round, course) : [];
   const complete = round.pars.filter((_, h) =>
     round.scores.every((s) => s[h] != null),
   ).length;
@@ -54,8 +55,8 @@ export function Scorecard({
     ? round.teeStrokeIndexes[hole]
     : tee?.strokeIndexes?.[courseHole];
   const otherPars =
-    course && parDiffersByTee(course, courseHole)
-      ? course.tees.filter(
+    course && parDiffersByTee({ ...course, tees }, courseHole)
+      ? tees.filter(
           (t) =>
             t.id !== round.teeId &&
             t.pars[courseHole] > 0 &&
@@ -99,13 +100,13 @@ export function Scorecard({
           day: "numeric",
         })}{" "}
         ·{" "}
-        {course && course.tees.length > 1 ? (
+        {course && tees.length > 1 ? (
           <select
             className="tee-select"
             aria-label="Round tee"
             value={round.teeId}
             onChange={(e) => {
-              const next = course.tees.find((t) => t.id === e.target.value);
+              const next = tees.find((t) => t.id === e.target.value);
               if (
                 next &&
                 confirm(
@@ -121,7 +122,7 @@ export function Scorecard({
             }}
           >
             {!tee && <option value={round.teeId}>{details.teeName}</option>}
-            {course.tees.map((t) => (
+            {tees.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.id === round.teeId ? details.teeName : t.name}
               </option>
