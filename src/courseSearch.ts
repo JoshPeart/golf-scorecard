@@ -98,6 +98,10 @@ function similarName(a: CourseSummary, b: CourseSummary): boolean {
 
 function sameCourse(a: CourseSummary, b: CourseSummary): boolean {
   if (a.provider === b.provider && a.sourceId === b.sourceId) return true;
+  if (
+    [a, b].some((c) => c.provider === "golfcore" && c.sourceId.includes("::"))
+  )
+    return false;
   if (!similarName(a, b)) return false;
   if (coordinates(a) && coordinates(b)) return distanceMiles(a, b) <= 1;
   return (

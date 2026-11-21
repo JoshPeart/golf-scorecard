@@ -137,6 +137,82 @@ describe("local and federated course search", () => {
     });
     expect(results).toHaveLength(2);
   });
+  it("only hides the same saved layout, keeping the online club and sibling layouts reachable", async () => {
+    const saved = {
+      ...course,
+      name: "The Belfry – Club",
+      clubName: "The Belfry",
+      sourceId: "the-belfry::Club",
+    };
+    const club: CourseSummary = {
+      ...summary,
+      name: "The Belfry",
+      sourceId: "the-belfry",
+    };
+    const derby = {
+      ...club,
+      name: "The Belfry – Derby",
+      sourceId: "the-belfry::Derby",
+    };
+    const pga = {
+      ...club,
+      name: "The Belfry – PGA National",
+      sourceId: "the-belfry::PGA%20National",
+    };
+    const core = provider("golfcore", [
+      club,
+      { ...club, name: saved.name, sourceId: saved.sourceId },
+      derby,
+      pga,
+    ]);
+    const secondary = provider("golfcourseapi", [
+      { ...club, provider: "golfcourseapi", sourceId: "secondary-club" },
+    ]);
+    const { results, errors } = await searchCourses("Belfry", {
+      courses: [saved],
+      providers: [core, secondary],
+      online: true,
+    });
+    expect(results.map((result) => result.sourceId)).toEqual([
+      saved.sourceId,
+      club.sourceId,
+      derby.sourceId,
+      pga.sourceId,
+    ]);
+    expect(errors).toEqual({});
+    const offline = await searchCourses("Belfry", {
+      courses: [saved],
+      providers: [core],
+      online: false,
+    });
+    expect(offline.results.map((result) => result.sourceId)).toEqual([
+      saved.sourceId,
+    ]);
+    expect(core.searchCourses).toHaveBeenCalledTimes(1);
+  });
+  it("does not fuzzy-merge ambiguous sibling layout names or different clubs' layouts", async () => {
+    const saved = {
+      ...course,
+      name: "The Belfry – Club",
+      sourceId: "the-belfry::Club",
+    };
+    const sibling = {
+      ...summary,
+      name: "The Belfry – Golf Club",
+      sourceId: "the-belfry::Golf%20Club",
+    };
+    const differentClub = { ...sibling, sourceId: "another-belfry::Club" };
+    const { results } = await searchCourses("Belfry", {
+      courses: [saved],
+      providers: [provider("golfcore", [sibling, differentClub])],
+      online: true,
+    });
+    expect(results.map((result) => result.sourceId)).toEqual([
+      saved.sourceId,
+      sibling.sourceId,
+      differentClub.sourceId,
+    ]);
+  });
   it("is local-only offline or for blank queries and keeps provider errors separate", async () => {
     const core = provider("golfcore");
     for (const [query, online] of [
