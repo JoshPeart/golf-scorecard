@@ -213,6 +213,36 @@ describe("local and federated course search", () => {
       differentClub.sourceId,
     ]);
   });
+  it.each([
+    { offset: 0.001, count: 1 },
+    { offset: 1, count: 2 },
+  ])(
+    "merges cross-provider layout copies only when nearby ($offset degree offset)",
+    async ({ offset, count }) => {
+      const saved = {
+        ...course,
+        name: "The Belfry – Derby",
+        clubName: "The Belfry",
+        sourceId: "the-belfry::Derby",
+      };
+      const copy: CourseSummary = {
+        ...summary,
+        provider: "golfcourseapi",
+        name: "The Belfry Derby",
+        sourceId: "secondary-derby",
+        lat: course.lat! + offset,
+      };
+      const { results, errors } = await searchCourses("Belfry", {
+        courses: [saved],
+        providers: [provider("golfcourseapi", [copy])],
+        online: true,
+      });
+      expect(results).toHaveLength(count);
+      expect(results[0].sourceId).toBe(saved.sourceId);
+      expect(errors).toEqual({});
+      if (count === 2) expect(results[1].sourceId).toBe(copy.sourceId);
+    },
+  );
   it("is local-only offline or for blank queries and keeps provider errors separate", async () => {
     const core = provider("golfcore");
     for (const [query, online] of [
