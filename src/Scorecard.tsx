@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { Course, Round } from "./types";
 import { relative, segment } from "./scoring";
-import { switchTee } from "./rounds";
+import { canUpdateTee, switchTee } from "./rounds";
 import { roundDetails } from "./roundDetails";
+import { parDiffersByTee } from "./courseSearch";
+import { teeLabel } from "./courseSelection";
 export function Scorecard({
   round,
   course,
@@ -40,6 +42,7 @@ export function Scorecard({
   const [par, setPar] = useState(4);
   const [also, setAlso] = useState(false);
   const tee = course?.tees.find((t) => t.id === round.teeId);
+  const tees = course?.tees ?? [];
   const complete = round.pars.filter((_, h) =>
     round.scores.every((s) => s[h] != null),
   ).length;
@@ -49,8 +52,19 @@ export function Scorecard({
       (a, b) => (b.played ? 1 : 0) - (a.played ? 1 : 0) || a.toPar - b.toPar,
     );
   const details = roundDetails(round, course);
-  const canUpdateTee =
-    !!course && courseHole < course.holes && tee?.pars[courseHole] != null;
+  const si = round.teeStrokeIndexes
+    ? round.teeStrokeIndexes[hole]
+    : tee?.strokeIndexes?.[courseHole];
+  const otherPars =
+    course && parDiffersByTee({ ...course, tees }, courseHole)
+      ? tees.filter(
+          (t) =>
+            t.id !== round.teeId &&
+            t.pars[courseHole] > 0 &&
+            t.pars[courseHole] !== round.pars[hole],
+        )
+      : [];
+  const canUpdateCourseTee = canUpdateTee(course, tee, courseHole);
   function navigate(nextHole: number, nextSummary: boolean) {
     moved.current = nextHole !== hole || nextSummary !== summary;
     setEditing(false);
@@ -86,13 +100,13 @@ export function Scorecard({
           day: "numeric",
         })}{" "}
         ·{" "}
-        {course && course.tees.length > 1 ? (
+        {course && (tees.length > 1 || !tee) ? (
           <select
             className="tee-select"
             aria-label="Round tee"
             value={round.teeId}
             onChange={(e) => {
-              const next = course.tees.find((t) => t.id === e.target.value);
+              const next = tees.find((t) => t.id === e.target.value);
               if (
                 next &&
                 confirm(
@@ -108,12 +122,18 @@ export function Scorecard({
             }}
           >
             {!tee && <option value={round.teeId}>{details.teeName}</option>}
-            {course.tees.map((t) => (
+            {tees.map((t) => (
               <option key={t.id} value={t.id}>
-                {t.id === round.teeId ? details.teeName : t.name}
+                {teeLabel(
+                  t,
+                  tees,
+                  t.id === round.teeId ? details.teeName : t.name,
+                )}
               </option>
             ))}
           </select>
+        ) : tee ? (
+          teeLabel(tee, tees, details.teeName)
         ) : (
           details.teeName
         )}{" "}
@@ -158,7 +178,20 @@ export function Scorecard({
               <span className="yardage">
                 {details.yardages?.[hole] ?? "—"} <small>YDS</small>
               </span>
+              {si != null && (
+                <span className="hole-si">
+                  SI <b>{si}</b>
+                </span>
+              )}
             </div>
+            {!!otherPars.length && (
+              <p className="par-variation">
+                Par varies by tee ·{" "}
+                {otherPars
+                  .map((t) => `${teeLabel(t, tees)} par ${t.pars[courseHole]}`)
+                  .join(" · ")}
+              </p>
+            )}
           </div>
           {editing && (
             <form
@@ -169,9 +202,13 @@ export function Scorecard({
                   ...round,
                   pars: round.pars.map((p, i) => (i === hole ? par : p)),
                 });
-                if (also && canUpdateTee && course && tee)
+                if (also && canUpdateCourseTee && course && tee)
                   onCourseChange({
                     ...course,
+                    customised:
+                      course.source && course.source !== "manual"
+                        ? true
+                        : course.customised,
                     tees: course.tees.map((t) =>
                       t.id === tee.id
                         ? {
@@ -197,7 +234,7 @@ export function Scorecard({
                   ))}
                 </select>
               </label>
-              {canUpdateTee && (
+              {canUpdateCourseTee && (
                 <label className="checkbox">
                   <input
                     type="checkbox"

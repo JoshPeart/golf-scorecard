@@ -1,7 +1,38 @@
 import { describe, expect, it } from "vitest";
 import type { Course, Round, Tee } from "./types";
-import { createRound, switchTee } from "./rounds";
+import { canUpdateTee, createRound, switchTee } from "./rounds";
 import { roundDetails } from "./roundDetails";
+
+it("snapshots SI for the selected nine and records nulls when switching to a legacy tee", () => {
+  const indexes = Array.from({ length: 18 }, (_, i) => i + 1);
+  const tee = {
+    id: "si",
+    name: "White",
+    pars: Array(18).fill(4),
+    strokeIndexes: indexes,
+  };
+  const course = { id: "c", name: "Course", holes: 18 as const, tees: [tee] };
+  const round = createRound(course, tee, ["Me"], "back");
+  expect(round.teeStrokeIndexes).toEqual(indexes.slice(9));
+  indexes[9] = 1;
+  expect(round.teeStrokeIndexes![0]).toBe(10);
+  expect(
+    switchTee(round, { ...tee, strokeIndexes: undefined }, 0).teeStrokeIndexes,
+  ).toEqual(Array(9).fill(null));
+});
+
+it("snapshots missing SI independently of later tee edits, including an empty round", () => {
+  const tee: Tee = { id: "legacy", name: "White", pars: Array(18).fill(4) };
+  const course: Course = { id: "c", name: "Course", holes: 18, tees: [tee] };
+  const round = createRound(course, tee, ["Me"], "back");
+  expect(round.teeStrokeIndexes).toEqual(Array(9).fill(null));
+  tee.strokeIndexes = Array.from({ length: 18 }, (_, i) => i + 1);
+  expect(round.teeStrokeIndexes).toEqual(Array(9).fill(null));
+  expect(
+    createRound({ ...course, holes: 9 }, { ...tee, pars: [] }, ["Me"])
+      .teeStrokeIndexes,
+  ).toHaveLength(9);
+});
 
 const tee: Tee = {
   id: "yellow",
@@ -17,15 +48,25 @@ const course: Course = {
 
 describe("round creation", () => {
   it("snapshots only the played nine's yardages", () => {
-    const withYards = { ...tee, yardages: Array.from({ length: 18 }, (_, i) => 300 + i) };
+    const withYards = {
+      ...tee,
+      yardages: Array.from({ length: 18 }, (_, i) => 300 + i),
+    };
     for (const length of ["front", "back"] as const) {
       const round = createRound(course, withYards, ["Me"], length);
-      const expected = withYards.yardages.slice(length === "back" ? 9 : 0, length === "back" ? 18 : 9);
+      const expected = withYards.yardages.slice(
+        length === "back" ? 9 : 0,
+        length === "back" ? 18 : 9,
+      );
       expect(round.teeYardages).toEqual(expected);
       expect(roundDetails(round).yardages).toEqual(expected);
-      expect(roundDetails(round, { ...course, tees: [withYards] }).yardages).toEqual(expected);
+      expect(
+        roundDetails(round, { ...course, tees: [withYards] }).yardages,
+      ).toEqual(expected);
     }
-    expect(createRound({ ...course, holes: 9 }, withYards, ["Me"]).teeYardages).toHaveLength(9);
+    expect(
+      createRound({ ...course, holes: 9 }, withYards, ["Me"]).teeYardages,
+    ).toHaveLength(9);
   });
   it("defaults to all 18 holes and independent blank player scores", () => {
     const round = createRound(course, tee, ["Me", "Alex"]);
@@ -52,10 +93,44 @@ describe("round creation", () => {
 });
 
 describe("tee switching", () => {
+  it("accepts new manually added tees without a layout tag and rejects other courses' tees", () => {
+    const added = { ...tee, id: "added", name: "Added" };
+    const other = { ...tee, id: "other" };
+    const edited = { ...course, tees: [tee, added] };
+    const round = createRound(edited, tee, ["Me"]);
+    expect(switchTee(round, added, 0, edited).teeId).toBe("added");
+    expect(switchTee(round, other, 0, edited)).toBe(round);
+  });
+  it("starts a separate nine-hole course at hole one", () => {
+    const nine = { ...tee, pars: Array(9).fill(3) };
+    const round = createRound(
+      { ...course, holes: 9, tees: [nine] },
+      nine,
+      ["Me"],
+      "back",
+    );
+    expect(round.pars).toHaveLength(9);
+    expect(round.scores[0]).toHaveLength(9);
+    expect(round.startHole).toBe(0);
+  });
+  it("allows back-nine par corrections on an eighteen-hole course only for existing holes", () => {
+    expect(canUpdateTee(course, tee, 9)).toBe(true);
+    expect(canUpdateTee(course, tee, 17)).toBe(true);
+    expect(canUpdateTee({ ...course, holes: 9 }, tee, 9)).toBe(false);
+    expect(canUpdateTee(course, tee, 18)).toBe(false);
+    expect(canUpdateTee(undefined, tee, 0)).toBe(false);
+    expect(canUpdateTee(course, undefined, 0)).toBe(false);
+    expect(canUpdateTee(course, { ...tee, pars: [] }, 0)).toBe(false);
+  });
   it("refreshes snapshots for the switched tee and course without changing scores", () => {
     const original = createRound(course, tee, ["Me"], "back");
     original.scores[0][0] = 4;
-    const nextTee = { ...tee, id: "red", name: "Red", yardages: Array.from({ length: 18 }, (_, i) => 200 + i) };
+    const nextTee = {
+      ...tee,
+      id: "red",
+      name: "Red",
+      yardages: Array.from({ length: 18 }, (_, i) => 200 + i),
+    };
     const renamed = { ...course, name: "Renamed course", tees: [nextTee] };
     const next = switchTee(original, nextTee, 1, renamed);
     expect(next.courseName).toBe("Renamed course");
@@ -90,20 +165,18 @@ describe("tee switching", () => {
     expect(round.pars).toEqual([6, 6, 6, 6]);
   });
   it("preserves a scored current hole and respects back-nine offsets", () => {
-    expect(
-      switchTee({ ...round, startHole: 9 }, tee, 2).pars,
-    ).toEqual([6, 6, 6, 6]);
+    expect(switchTee({ ...round, startHole: 9 }, tee, 2).pars).toEqual([
+      6, 6, 6, 6,
+    ]);
     expect(switchTee({ ...round, startHole: 9 }, tee, 1).pars).toEqual([
       6, 5, 6, 6,
     ]);
   });
   it("supports legacy offsets, empty rounds and missing new tee pars", () => {
-    expect(switchTee(round, tee, 0).pars).toEqual([
-      4, 4, 6, 6,
-    ]);
-    expect(switchTee({ ...round, pars: [], scores: [[]] }, tee, 0).pars).toEqual(
-      [],
-    );
+    expect(switchTee(round, tee, 0).pars).toEqual([4, 4, 6, 6]);
+    expect(
+      switchTee({ ...round, pars: [], scores: [[]] }, tee, 0).pars,
+    ).toEqual([]);
     expect(switchTee(round, { ...tee, pars: [] }, 1).pars).toEqual(round.pars);
   });
 });

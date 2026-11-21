@@ -45,7 +45,10 @@ describe("round tee snapshots", () => {
         ],
       };
       expect(save(data)).toBe(true);
-      expect(load()).toEqual(data);
+      expect(load()).toEqual({
+        ...data,
+        courses: [{ ...course, source: "manual", verified: false }],
+      });
     } finally {
       vi.unstubAllGlobals();
     }
@@ -55,6 +58,7 @@ describe("round tee snapshots", () => {
     expect(snapshot).toEqual({
       courseName: "Links",
       teeName: "Red",
+      teeStrokeIndexes: Array(9).fill(null),
       teeYardages: Array(9).fill(300),
     });
     expect(snapshot.teeYardages).not.toBe(course.tees[0].yardages);

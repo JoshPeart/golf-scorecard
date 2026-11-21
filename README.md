@@ -1,7 +1,8 @@
 # Fairway · Golf scorecard
 
 A phone-first golf notebook built with React, TypeScript, Vite and plain CSS.
-No account, backend, router or UI framework. Course pars belong to each tee.
+No account, router or UI framework. Course pars belong to each tee. Your notebook
+stays in localStorage; an optional Worker proxies online course lookups only.
 
 ## Run locally
 
@@ -25,7 +26,7 @@ npm run preview -- --host 0.0.0.0 --port 4173
 
 ## On the course
 
-1. Add a 9- or 18-hole course; name its tees and set each tee's pars (3–6) and optional yardages.
+1. Search for a course, or manually add a 9- or 18-hole course with per-tee pars (3–6), optional yardages and SI (1–18).
 2. Start a round with a course, tee and optional comma-separated partners.
 3. Use +/- to score, or **Mark par**. On an unscored hole +/- starts from par, so one tap records a birdie/bogey. Clear score restores an unplayed score.
 4. Tap **PAR** to edit the round's par. Optionally also update the underlying course tee.
@@ -78,5 +79,52 @@ saved rounds ready to resume.
 - `src/index.css`, `src/App.css`: global foundation and screen styles.
 - `public/manifest.webmanifest`: installation metadata; keep paths relative.
 
-Good next additions: JSON export/import, course search, handicaps, an offline
+Good next additions: JSON export/import, handicaps, an offline
 service worker, and a migration/validation layer before syncing external data.
+
+## Course search and provider setup
+
+New Round searches saved courses first, then GolfCore and GolfCourseAPI. Search
+ignores accents/punctuation and tolerates small typos. **Courses near me** asks
+for location permission and sorts results by distance. Empty search groups saved
+courses into Favourites, Recently played, and other saved courses.
+
+Online clubs with multiple layouts offer a layout choice first. Each layout is saved
+as its own course ("Club – Layout"), with only that routing's holes and tees;
+editing or switching tees cannot mix it with another layout. Single-layout
+courses keep their original name. Selecting a layout downloads its scorecard
+into localStorage. Saved courses remain selectable with no network while the app is open. There is no
+guarantee of an offline cold start. Tees with any missing par are excluded; check
+warnings for missing yardage/SI before playing. Editing an imported course marks
+it **Customised**, protecting it from provider refreshes. Round pars and SI are
+snapshots, so later course edits do not rewrite saved pars, scores or SI.
+
+GolfCore keyless reads are available **until 4 December 2026**. With no Worker URL,
+the browser uses this fallback and GolfCourseAPI is disabled. After that date,
+configure the Worker and a GolfCore key. Never put provider keys in Vite variables
+or the GitHub Pages bundle.
+
+Deploy the proxy separately (Node 22.12+ for Wrangler; root app uses Node 20):
+
+```sh
+cd worker
+npm install
+npx wrangler secret put GOLFCORE_API_KEY
+npx wrangler secret put GOLFCOURSEAPI_KEY
+npx wrangler deploy
+```
+
+Set `ALLOWED_ORIGINS` in `worker/wrangler.toml` to your exact site origin (without
+the repository path); defaults include Josh's GitHub Pages origin and localhost.
+In GitHub **Settings → Secrets and variables → Actions → Variables**, create the
+repository variable **VITE_COURSE_API_URL** with the deployed Worker URL.
+`deploy.yml` passes `${{ vars.VITE_COURSE_API_URL }}` to the build. Re-run the Pages
+workflow after changing it. For local development, set the same URL in an ignored
+`.env.local` file and restart Vite. See [Worker details](worker/README.md).
+
+Course data © [GolfCore](https://www.golfcore.org) and
+[GolfCourseAPI](https://golfcourseapi.com). Imported courses link to the source
+course page where supplied. GolfCore's [terms](https://www.golfcore.org/terms/)
+require attribution and preservation of applicable source-license notices; the
+scorecard responses used here do not identify OpenStreetMap-derived data, so the
+app does not claim OSM provenance or import mapped geometry.

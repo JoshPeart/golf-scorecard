@@ -11,17 +11,19 @@ import { relative, segment } from "./scoring";
 import { roundDetails } from "./roundDetails";
 import { CourseEditor } from "./CourseEditor";
 import { Scorecard } from "./Scorecard";
-import { createRound } from "./rounds";
-import type { RoundLength } from "./rounds";
+import { NewRound } from "./CourseSearch";
+import { CourseBadges } from "./CourseBadges";
+import { importCourse } from "./courseSearch";
 import "./App.css";
 
 export default function App() {
   const [data, setData] = useState(load);
   const [active, setActive] = useState(() => loadActiveRound(data));
-  const [screen, setScreen] = useState<"home" | "course" | "new" | "round">(
-    active ? "round" : "home",
-  );
+  const [screen, setScreen] = useState<
+    "home" | "course" | "new" | "round" | "credits"
+  >(active ? "round" : "home");
   const [courseId, setCourseId] = useState("");
+  const [editorReturn, setEditorReturn] = useState<"home" | "new">("home");
   const [storageError, setStorageError] = useState(false);
   useEffect(() => {
     setStorageError(!save(data));
@@ -70,7 +72,13 @@ export default function App() {
             starts here.
           </h1>
           <p className="muted">A simple scorecard. Just you and the course.</p>
-          <button className="primary wide" onClick={() => setScreen("new")}>
+          <button
+            className="primary wide"
+            onClick={() => {
+              setCourseId("");
+              setScreen("new");
+            }}
+          >
             New round <span>↗</span>
           </button>
           <div className="section-heading">
@@ -115,6 +123,7 @@ export default function App() {
               className="text-button"
               onClick={() => {
                 setCourseId("");
+                setEditorReturn("home");
                 setScreen("course");
               }}
             >
@@ -130,11 +139,13 @@ export default function App() {
               key={c.id}
               onClick={() => {
                 setCourseId(c.id);
+                setEditorReturn("home");
                 setScreen("course");
               }}
             >
               <span>
                 <strong>{c.name}</strong>
+                <CourseBadges course={c} />
                 <small>
                   {c.holes} holes · {c.tees.map((t) => t.name).join(" / ")}
                 </small>
@@ -142,7 +153,16 @@ export default function App() {
               <span>↗</span>
             </button>
           ))}
-          <footer>Made for the walk. Saved on this device.</footer>
+          <footer>
+            Made for the walk. Saved on this device.
+            <br />
+            <button
+              className="text-button"
+              onClick={() => setScreen("credits")}
+            >
+              About &amp; credits
+            </button>
+          </footer>
         </main>
       )}
       {screen === "course" && (
@@ -154,24 +174,43 @@ export default function App() {
             .map((r) => r.teeId)}
           onSave={(c) => {
             updateCourse(c);
-            setScreen("home");
+            setCourseId(c.id);
+            setScreen(editorReturn);
           }}
-          onCancel={() => setScreen("home")}
+          onCancel={() => setScreen(editorReturn)}
           onDelete={() => {
             setData((d) => ({
               ...d,
               courses: d.courses.filter((c) => c.id !== courseId),
             }));
-            setScreen("home");
+            setCourseId("");
+            setScreen(editorReturn);
           }}
         />
       )}
       {screen === "new" && (
         <NewRound
           courses={data.courses}
+          rounds={data.rounds}
+          selectedId={courseId}
+          onSelect={setCourseId}
+          onFavourite={(c) => updateCourse({ ...c, favourite: !c.favourite })}
+          onEdit={(id) => {
+            setCourseId(id);
+            setEditorReturn("new");
+            setScreen("course");
+          }}
+          onImport={(c) => {
+            const existing = data.courses.find(
+              (old) => old.source === c.source && old.sourceId === c.sourceId,
+            );
+            setData((d) => ({ ...d, courses: importCourse(d.courses, c) }));
+            setCourseId(existing?.id ?? c.id);
+          }}
           onBack={() => setScreen("home")}
           onAdd={() => {
             setCourseId("");
+            setEditorReturn("new");
             setScreen("course");
           }}
           onStart={(r) => {
@@ -180,6 +219,45 @@ export default function App() {
             setScreen("round");
           }}
         />
+      )}
+      {screen === "credits" && (
+        <main className="credits">
+          <button className="text-button" onClick={() => setScreen("home")}>
+            ← Home
+          </button>
+          <div className="eyebrow">MADE FOR THE WALK</div>
+          <h1>About Fairway.</h1>
+          <p>
+            A simple golf notebook for the course. Choose your tee, keep score
+            with friends, and keep your rounds on this device.
+          </p>
+          <p>
+            No account required. Your courses, favourites and scores stay in
+            this browser's localStorage. Clearing browser data removes your
+            notebook.
+          </p>
+          <h2>Course data &amp; credits</h2>
+          <p>
+            Course data ©{" "}
+            <a href="https://www.golfcore.org" target="_blank" rel="noreferrer">
+              GolfCore
+            </a>{" "}
+            and{" "}
+            <a
+              href="https://golfcourseapi.com"
+              target="_blank"
+              rel="noreferrer"
+            >
+              GolfCourseAPI
+            </a>
+            .
+          </p>
+          <p className="muted">
+            Each imported course links to its source where supplied. Data can be
+            incomplete or out of date: check it against the club's scorecard
+            before playing. Edits you make stay yours.
+          </p>
+        </main>
       )}
       {screen === "round" && round && active && (
         <Scorecard
@@ -204,111 +282,5 @@ export default function App() {
         />
       )}
     </div>
-  );
-}
-
-function NewRound({
-  courses,
-  onStart,
-  onBack,
-  onAdd,
-}: {
-  courses: Course[];
-  onStart: (r: Round) => void;
-  onBack: () => void;
-  onAdd: () => void;
-}) {
-  const [courseId, setCourseId] = useState(courses[0]?.id || "");
-  const course = courses.find((c) => c.id === courseId);
-  const [teeId, setTeeId] = useState(course?.tees[0]?.id || "");
-  const [names, setNames] = useState("");
-  const [length, setLength] = useState<RoundLength>("18");
-  return (
-    <main>
-      <button className="text-button" onClick={onBack}>
-        ← Back
-      </button>
-      <div className="eyebrow">FIRST TEE</div>
-      <h1>Let's play.</h1>
-      {!courses.length ? (
-        <>
-          <p>Add a course before starting your round.</p>
-          <button className="primary" onClick={onAdd}>
-            Add course
-          </button>
-        </>
-      ) : (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const tee = course?.tees.find((t) => t.id === teeId);
-            if (!course || !tee) return;
-            const players = [
-              "Me",
-              ...names
-                .split(",")
-                .map((n) => n.trim())
-                .filter(Boolean),
-            ];
-            onStart(createRound(course, tee, players, length));
-          }}
-        >
-          <label>
-            Course
-            <select
-              value={courseId}
-              onChange={(e) => {
-                setCourseId(e.target.value);
-                setTeeId(
-                  courses.find((c) => c.id === e.target.value)!.tees[0].id,
-                );
-              }}
-            >
-              {courses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Tee
-            <select value={teeId} onChange={(e) => setTeeId(e.target.value)}>
-              {course?.tees.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} · Par {t.pars.reduce((a, b) => a + b, 0)}
-                </option>
-              ))}
-            </select>
-          </label>
-          {course?.holes === 18 && (
-            <label>
-              Holes to play
-              <select
-                value={length}
-                onChange={(e) => setLength(e.target.value as RoundLength)}
-              >
-                <option value="18">18 holes</option>
-                <option value="front">Front 9 (1–9)</option>
-                <option value="back">Back 9 (10–18)</option>
-              </select>
-            </label>
-          )}
-          <label>
-            Playing partners <span className="muted">(optional)</span>
-            <input
-              maxLength={200}
-              value={names}
-              onChange={(e) => setNames(e.target.value)}
-              placeholder="Alex, Sam"
-            />
-          </label>
-          <p className="muted">
-            Separate names with commas. You're already in as “Me”.
-          </p>
-          <button className="primary wide">Start round ↗</button>
-        </form>
-      )}
-    </main>
   );
 }

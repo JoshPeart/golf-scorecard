@@ -1,4 +1,4 @@
-import type { Round, Store } from "./types";
+import type { Course, Round, Store } from "./types";
 const KEY = "golf-scorecard:v1";
 const ACTIVE_KEY = "golf-scorecard:active:v1";
 export interface ActiveRound {
@@ -46,7 +46,14 @@ export function load(): Store {
   try {
     const data = JSON.parse(localStorage.getItem(KEY) || "null");
     if (data && Array.isArray(data.courses) && Array.isArray(data.rounds))
-      return data;
+      return {
+        ...data,
+        courses: data.courses.map((course: Course) => ({
+          ...course,
+          source: course.source ?? "manual",
+          verified: course.verified ?? false,
+        })),
+      };
   } catch {
     /* Storage may be disabled. */
   }

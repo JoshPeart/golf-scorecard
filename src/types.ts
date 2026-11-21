@@ -4,12 +4,30 @@ export interface Tee {
   color?: string;
   pars: number[];
   yardages?: (number | null)[];
+  gender?: "male" | "female" | "mixed";
+  courseRating?: number;
+  slope?: number;
+  totalYardage?: number;
+  strokeIndexes?: (number | null)[];
 }
 export interface Course {
   id: string;
   name: string;
   holes: 9 | 18;
   tees: Tee[];
+  clubName?: string;
+  address?: string;
+  postcode?: string;
+  lat?: number;
+  lng?: number;
+  country?: string;
+  source?: "golfcore" | "golfcourseapi" | "manual";
+  sourceId?: string;
+  sourceUrl?: string;
+  lastSyncedAt?: string;
+  verified?: boolean;
+  customised?: boolean;
+  favourite?: boolean;
 }
 export interface Round {
   id: string;
@@ -18,6 +36,7 @@ export interface Round {
   courseName?: string;
   teeName?: string;
   teeYardages?: (number | null)[];
+  teeStrokeIndexes?: (number | null)[];
   date: string;
   players: string[];
   pars: number[];

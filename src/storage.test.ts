@@ -9,6 +9,32 @@ import {
 import type { Store } from "./types";
 afterEach(() => vi.unstubAllGlobals());
 describe("versioned storage", () => {
+  it("migrates legacy courses without touching rounds or overwriting provider metadata", () => {
+    const round = { id: "legacy-round", pars: [4], teeYardages: [300] };
+    const data = {
+      courses: [
+        { id: "manual", name: "Manual", holes: 9, tees: [] },
+        {
+          id: "remote",
+          name: "Remote",
+          holes: 18,
+          tees: [],
+          source: "golfcore",
+          verified: true,
+          favourite: true,
+        },
+      ],
+      rounds: [round],
+    };
+    vi.stubGlobal("localStorage", { getItem: () => JSON.stringify(data) });
+    const loaded = load();
+    expect(loaded.courses[0]).toMatchObject({
+      source: "manual",
+      verified: false,
+    });
+    expect(loaded.courses[1]).toEqual(data.courses[1]);
+    expect(loaded.rounds).toEqual([round]);
+  });
   it("returns an empty notebook without saved data", () => {
     vi.stubGlobal("localStorage", { getItem: () => null });
     expect(load()).toEqual({ courses: [], rounds: [] });

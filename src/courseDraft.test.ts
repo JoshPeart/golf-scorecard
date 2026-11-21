@@ -22,6 +22,30 @@ const course: Course = {
 };
 
 describe("course drafts", () => {
+  it("saves totals from edited distances, retaining the provider total only when incomplete", () => {
+    const imported = {
+      ...course,
+      source: "golfcore" as const,
+      tees: [{ ...course.tees[0], totalYardage: 9999 }],
+    };
+    const draft = {
+      ...imported,
+      tees: [
+        {
+          ...imported.tees[0],
+          yardages: [300, ...Array(17).fill(400)] as (number | null)[],
+        },
+      ],
+    };
+    expect(courseToSave(draft, imported)?.tees[0].totalYardage).toBe(7100);
+    expect(courseToSave(draft, imported)?.customised).toBe(true);
+    expect(courseToSave({ ...draft, holes: 9 })?.tees[0].totalYardage).toBe(
+      3500,
+    );
+    draft.tees[0].yardages = [null, ...Array(17).fill(400)];
+    expect(courseToSave(draft, imported)?.tees[0].totalYardage).toBe(9999);
+    expect(courseToSave({ ...draft, tees: [] })?.tees).toEqual([]);
+  });
   it("ignores hidden holes after a nine-hole round trip but detects saved edits", () => {
     const nine = courseToSave({ ...course, holes: 9 })!;
     const restored = resizeDraft(resizeDraft(nine, 18), 9);

@@ -3,6 +3,20 @@ import { snapshotTee } from "./roundDetails";
 
 export type RoundLength = "18" | "front" | "back";
 
+export function canUpdateTee(
+  course: Course | undefined,
+  tee: Tee | undefined,
+  hole: number,
+): boolean {
+  return (
+    !!course &&
+    !!tee &&
+    hole >= 0 &&
+    hole < course.holes &&
+    tee.pars[hole] != null
+  );
+}
+
 export function createRound(
   course: Course,
   tee: Tee,
@@ -30,6 +44,7 @@ export function switchTee(
   hole: number,
   course?: Course,
 ): Round {
+  if (course && !course.tees.some((t) => t.id === tee.id)) return round;
   return {
     ...round,
     teeId: tee.id,
@@ -40,8 +55,7 @@ export function switchTee(
       round.pars.length,
     ),
     pars: round.pars.map((par, i) =>
-      i >= hole &&
-      round.scores.every((scores) => scores[i] == null)
+      i >= hole && round.scores.every((scores) => scores[i] == null)
         ? (tee.pars[i + (round.startHole ?? 0)] ?? par)
         : par,
     ),

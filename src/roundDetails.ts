@@ -10,6 +10,10 @@ export function snapshotTee(
     courseName: course.name,
     teeName: tee.name,
     teeYardages: tee.yardages?.slice(startHole, startHole + holes),
+    teeStrokeIndexes: Array.from(
+      { length: holes },
+      (_, i) => tee.strokeIndexes?.[startHole + i] ?? null,
+    ),
   };
 }
 
