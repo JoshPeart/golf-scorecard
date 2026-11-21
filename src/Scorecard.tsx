@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Course, Round } from "./types";
 import { relative, segment } from "./scoring";
-import { roundTees, switchTee } from "./rounds";
+import { canUpdateTee, switchTee } from "./rounds";
 import { roundDetails } from "./roundDetails";
 import { parDiffersByTee } from "./courseSearch";
 import { teeLabel } from "./courseSelection";
@@ -42,7 +42,7 @@ export function Scorecard({
   const [par, setPar] = useState(4);
   const [also, setAlso] = useState(false);
   const tee = course?.tees.find((t) => t.id === round.teeId);
-  const tees = course ? roundTees(round, course) : [];
+  const tees = course?.tees ?? [];
   const complete = round.pars.filter((_, h) =>
     round.scores.every((s) => s[h] != null),
   ).length;
@@ -64,8 +64,7 @@ export function Scorecard({
             t.pars[courseHole] !== round.pars[hole],
         )
       : [];
-  const canUpdateTee =
-    !!course && courseHole < course.holes && tee?.pars[courseHole] != null;
+  const canUpdateCourseTee = canUpdateTee(course, tee, courseHole);
   function navigate(nextHole: number, nextSummary: boolean) {
     moved.current = nextHole !== hole || nextSummary !== summary;
     setEditing(false);
@@ -203,7 +202,7 @@ export function Scorecard({
                   ...round,
                   pars: round.pars.map((p, i) => (i === hole ? par : p)),
                 });
-                if (also && canUpdateTee && course && tee)
+                if (also && canUpdateCourseTee && course && tee)
                   onCourseChange({
                     ...course,
                     customised:
@@ -235,7 +234,7 @@ export function Scorecard({
                   ))}
                 </select>
               </label>
-              {canUpdateTee && (
+              {canUpdateCourseTee && (
                 <label className="checkbox">
                   <input
                     type="checkbox"

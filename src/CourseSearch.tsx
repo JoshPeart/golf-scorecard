@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Course, Round, Tee } from "./types";
-import { createRound, teeHoleCount, type RoundLength } from "./rounds";
+import { createRound, type RoundLength } from "./rounds";
 import {
   needsChecking,
   searchCourses,
@@ -77,6 +77,42 @@ export function TeeCard({
   );
 }
 
+export function LayoutPicker({
+  courses,
+  onPick,
+  onCancel,
+}: {
+  courses: Course[];
+  onPick: (course: Course) => void;
+  onCancel: () => void;
+}) {
+  return (
+    <section aria-label="Course layouts">
+      <h2>Choose your course layout</h2>
+      <p className="muted">Each layout has its own holes and tees.</p>
+      {courses.map((course) => (
+        <button
+          className="list-card"
+          key={course.sourceId}
+          onClick={() => onPick(course)}
+        >
+          <span>
+            <strong>{course.name}</strong>
+            <small>
+              {course.holes} holes · {course.tees.length} tees
+            </small>
+            <CourseBadges course={course} />
+          </span>
+          <span>↗</span>
+        </button>
+      ))}
+      <button className="text-button" onClick={onCancel}>
+        ← Back to results
+      </button>
+    </section>
+  );
+}
+
 export function NewRound({
   courses,
   rounds,
@@ -113,13 +149,14 @@ export function NewRound({
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [fetchError, setFetchError] = useState("");
+  const [layouts, setLayouts] = useState<Course[]>([]);
   const [teeId, setTeeId] = useState("");
   const [names, setNames] = useState("");
   const [length, setLength] = useState<RoundLength>("18");
   const picking = useRef({ id: 0 });
   const course = courses.find((c) => c.id === selectedId);
   const tee = course?.tees.find((t) => t.id === teeId) ?? course?.tees[0];
-  const holes = course && tee ? teeHoleCount(course, tee) : course?.holes;
+  const holes = course?.holes;
   const searching = !!query.trim() || !!location;
   useEffect(() => {
     const pending = picking.current;
@@ -208,8 +245,17 @@ export function NewRound({
     const token = ++picking.current.id;
     setFetching(true);
     try {
-      const fetched = await provider.getCourse(result.sourceId);
-      if (token === picking.current.id) onImport(fetched);
+      const fetched = provider.getCourseLayouts
+        ? await provider.getCourseLayouts(result.sourceId)
+        : [await provider.getCourse(result.sourceId)];
+      if (token === picking.current.id) {
+        if (fetched.length === 1) onImport(fetched[0]);
+        else if (fetched.length > 1) setLayouts(fetched);
+        else
+          setFetchError(
+            "No course layouts available. Add the course manually.",
+          );
+      }
     } catch (error) {
       if (token === picking.current.id)
         setFetchError(
@@ -222,6 +268,9 @@ export function NewRound({
     }
   }
   function nearMe() {
+    picking.current.id++;
+    setFetching(false);
+    setLayouts([]);
     setGeoError("");
     if (!navigator.geolocation) {
       setGeoError("Location is unavailable on this device.");
@@ -292,10 +341,13 @@ export function NewRound({
           placeholder="Course name, e.g. Kedleston"
           value={query}
           onChange={(e) => {
+            picking.current.id++;
+            setFetching(false);
             setQuery(e.target.value);
             setLocation(undefined);
             onSelect("");
             setFetchError("");
+            setLayouts([]);
             setSearch({ results: [], errors: {} });
             setLoading(online && !!e.target.value.trim());
           }}
@@ -328,7 +380,23 @@ export function NewRound({
           Loading course…
         </p>
       )}
-      {!course ? (
+      {!course && layouts.length > 1 ? (
+        <LayoutPicker
+          courses={layouts.map(
+            (layout) =>
+              courses.find(
+                (saved) =>
+                  saved.source === layout.source &&
+                  saved.sourceId === layout.sourceId,
+              ) ?? layout,
+          )}
+          onPick={(layout) => {
+            setLayouts([]);
+            onImport(layout);
+          }}
+          onCancel={() => setLayouts([])}
+        />
+      ) : !course ? (
         <>
           {searching ? (
             <section aria-label="Course results" aria-busy={loading}>

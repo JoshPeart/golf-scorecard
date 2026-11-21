@@ -7,7 +7,7 @@ import {
   teeTotals,
   teeLabel,
 } from "./courseSelection";
-import { TeeCard } from "./CourseSearch";
+import { LayoutPicker, TeeCard } from "./CourseSearch";
 import { Scorecard } from "./Scorecard";
 import { createRound } from "./rounds";
 import { CourseBadges, SourceLink } from "./CourseBadges";
@@ -39,6 +39,47 @@ const course: Course = {
 };
 afterEach(() => vi.useRealTimers());
 describe("course selection UI", () => {
+  it("offers distinct layout courses before selecting tees", () => {
+    const courses = [
+      { ...course, name: "The Belfry – Derby", sourceId: "the-belfry::Derby" },
+      {
+        ...course,
+        name: "The Belfry – Brabazon",
+        sourceId: "the-belfry::Brabazon",
+      },
+    ];
+    const html = renderToStaticMarkup(
+      createElement(LayoutPicker, {
+        courses,
+        onPick: () => {},
+        onCancel: () => {},
+      }),
+    );
+    expect(html).toContain("Choose your course layout");
+    expect(html).toContain("The Belfry – Derby");
+    expect(html).toContain("The Belfry – Brabazon");
+    expect(html).toContain("18 holes · 2 tees");
+  });
+  it("includes manually added tees in the current layout course's selector", () => {
+    const added = { ...course.tees[0], id: "added", name: "New manual tee" };
+    const edited = { ...course, tees: [...course.tees, added] };
+    const round = createRound(course, course.tees[0], ["Me"]);
+    const html = renderToStaticMarkup(
+      createElement(Scorecard, {
+        round,
+        course: edited,
+        hole: 0,
+        summary: false,
+        saved: true,
+        onChange: () => {},
+        onCourseChange: () => {},
+        onBack: () => {},
+        onDelete: () => {},
+        onNavigate: () => {},
+      }),
+    );
+    expect(html).toContain('<option value="added">New manual tee</option>');
+  });
   it("disambiguates duplicate tee names by gender in round options and par variations", () => {
     const female = {
       ...course.tees[0],

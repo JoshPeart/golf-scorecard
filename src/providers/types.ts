@@ -21,6 +21,7 @@ export interface CourseProvider {
   id: ProviderId;
   searchCourses(query: string, location?: Location): Promise<CourseSummary[]>;
   getCourse(id: string): Promise<Course>;
+  getCourseLayouts?(id: string): Promise<Course[]>;
 }
 export class CourseProviderError extends Error {
   readonly provider: ProviderId;

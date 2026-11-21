@@ -34,13 +34,23 @@ const course: Course = {
 };
 
 describe("normalized course tables", () => {
-  it("preserves layout identity and nine-hole tees in mixed-size clubs", () => {
-    const club = {
+  it("round trips separate nine- and eighteen-hole layout courses", () => {
+    const eighteen = {
       ...course,
+      id: "other",
       holes: 18 as const,
-      tees: course.tees.map((t) => ({ ...t, layoutId: "Balgove" })),
+      sourceId: "park::Main",
+      name: "Park – Main",
+      tees: course.tees.map((t) => ({
+        ...t,
+        id: `other-${t.id}`,
+        pars: Array(18).fill(4),
+        yardages: Array(18).fill(300),
+        strokeIndexes: Array.from({ length: 18 }, (_, i) => i + 1),
+      })),
     };
-    expect(fromTables(toTables([club]))).toEqual([club]);
+    const courses = [course, eighteen];
+    expect(fromTables(toTables(courses))).toEqual(courses);
   });
   it("round trips metadata, flags, tees and tee-specific pars/SI", () => {
     const tables = toTables([course]);

@@ -89,8 +89,11 @@ ignores accents/punctuation and tolerates small typos. **Courses near me** asks
 for location permission and sorts results by distance. Empty search groups saved
 courses into Favourites, Recently played, and other saved courses.
 
-Selecting an online result downloads its scorecard into localStorage. Saved
-courses remain selectable with no network while the app is open. There is no
+Online clubs with multiple layouts offer a layout choice first. Each layout is saved
+as its own course ("Club – Layout"), with only that routing's holes and tees;
+editing or switching tees cannot mix it with another layout. Single-layout
+courses keep their original name. Selecting a layout downloads its scorecard
+into localStorage. Saved courses remain selectable with no network while the app is open. There is no
 guarantee of an offline cold start. Tees with any missing par are excluded; check
 warnings for missing yardage/SI before playing. Editing an imported course marks
 it **Customised**, protecting it from provider refreshes. Round pars and SI are

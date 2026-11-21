@@ -10,6 +10,8 @@ import {
   golfcourseapiDetail,
 } from "./fixtures/courses";
 import { needsChecking, parDiffersByTee } from "../courseSearch";
+import { courseToSave } from "../courseDraft";
+import { canUpdateTee, createRound, switchTee } from "../rounds";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -17,7 +19,9 @@ afterEach(() => {
   vi.useRealTimers();
 });
 function respond(data: unknown) {
-  const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify(data)));
+  const fetcher = vi
+    .fn()
+    .mockImplementation(async () => new Response(JSON.stringify(data)));
   vi.stubGlobal("fetch", fetcher);
   return fetcher;
 }
@@ -98,7 +102,7 @@ describe("GolfCore provider", () => {
     expect(parDiffersByTee(course, 1)).toBe(true);
     expect(needsChecking(course)).not.toContain("Missing pars");
   });
-  it("prefixes multiple layouts, drops empty/no-par tees and flags nonstandard counts", async () => {
+  it("separates multiple layouts, drops empty/no-par tees and flags nonstandard counts", async () => {
     const original = golfcoreDetail.layouts[0];
     const layout = {
       ...original,
@@ -122,13 +126,112 @@ describe("GolfCore provider", () => {
         { ...layout, name: "Alternate" },
       ],
     });
-    const course = await new GolfCoreProvider("").getCourse("sample");
+    const [course, alternate] = await new GolfCoreProvider("").getCourseLayouts(
+      "sample",
+    );
     expect(course.holes).toBe(9);
-    expect(course.tees).toHaveLength(3);
-    expect(course.tees[0].name).toBe("Main — Black");
-    expect(course.tees[1].name).toBe("Alternate — Black");
-    expect(course.tees[0].layoutId).not.toBe(course.tees[1].layoutId);
+    expect(course.tees).toHaveLength(1);
+    expect(alternate.tees).toHaveLength(2);
+    expect(course.name).toBe(`${golfcoreDetail.name} – Main`);
+    expect(course.tees[0].name).toBe("Black");
+    expect(course.sourceId).not.toBe(alternate.sourceId);
     expect(needsChecking(course)).toContain("Unexpected hole count");
+  });
+  it("keeps each routing independently playable and editable when nine holes are listed first", async () => {
+    const main = golfcoreDetail.layouts[0];
+    const nine = {
+      ...main,
+      name: "Balgove",
+      holes: main.holes.slice(0, 9),
+      tees: main.tees.map((t) => ({ ...t, holes: t.holes.slice(0, 9) })),
+    };
+    const raw = {
+      ...golfcoreDetail,
+      layouts: [nine, { ...main, name: "Old Course" }],
+    };
+    const fetcher = respond(raw);
+    const provider = new GolfCoreProvider("");
+    const [balgove, old] = await provider.getCourseLayouts(raw.slug);
+    expect(balgove.holes).toBe(9);
+    expect(old.holes).toBe(18);
+    expect(
+      createRound(balgove, balgove.tees[0], ["Me"], "back").pars,
+    ).toHaveLength(9);
+    expect(courseToSave(balgove, balgove)?.tees[0].pars).toHaveLength(9);
+    const saved = courseToSave({ ...old, name: "Edited Old Course" }, old)!;
+    expect(
+      saved.tees.every(
+        (t) =>
+          t.pars.length === 18 &&
+          t.yardages?.length === 18 &&
+          t.strokeIndexes?.length === 18,
+      ),
+    ).toBe(true);
+    expect(saved.customised).toBe(true);
+    const back = createRound(saved, saved.tees[0], ["Me"], "back");
+    expect(back.startHole).toBe(9);
+    expect(canUpdateTee(saved, saved.tees[0], back.startHole!)).toBe(true);
+    fetcher.mockResolvedValue(
+      new Response(
+        JSON.stringify({ ...raw, layouts: [raw.layouts[1], raw.layouts[0]] }),
+      ),
+    );
+    const refreshed = await provider.getCourse(old.sourceId!);
+    expect(refreshed.sourceId).toBe(old.sourceId);
+    expect(refreshed.holes).toBe(18);
+    expect(fetcher.mock.calls[1][0]).toBe(
+      `https://api.golfcore.org/v1/courses/${raw.slug}`,
+    );
+  });
+  it("imports Belfry layouts as distinct courses and only switches among Derby tees", async () => {
+    const main = golfcoreDetail.layouts[0];
+    respond({
+      ...golfcoreDetail,
+      slug: "the-belfry",
+      name: "The Belfry",
+      layouts: ["Derby", "Brabazon", "PGA National"].map((name) => ({
+        ...main,
+        name,
+      })),
+    });
+    const provider = new GolfCoreProvider("");
+    const courses = await provider.getCourseLayouts("the-belfry");
+    expect(courses.map((c) => c.name)).toEqual([
+      "The Belfry – Derby",
+      "The Belfry – Brabazon",
+      "The Belfry – PGA National",
+    ]);
+    const [derby, brabazon] = courses;
+    expect(derby.tees).toHaveLength(main.tees.length);
+    expect(new Set(courses.map((c) => c.sourceId)).size).toBe(3);
+    const round = createRound(derby, derby.tees[0], ["Me"]);
+    expect(switchTee(round, brabazon.tees[0], 0, derby)).toBe(round);
+    expect(switchTee(round, derby.tees[1], 0, derby).teeId).toBe(
+      derby.tees[1].id,
+    );
+    const added = { ...derby.tees[0], id: "added", name: "Manual" };
+    expect(
+      switchTee(round, added, 0, { ...derby, tees: [...derby.tees, added] })
+        .teeId,
+    ).toBe("added");
+    await expect(provider.getCourse("the-belfry")).rejects.toMatchObject({
+      kind: "invalid",
+      message: "Choose a course layout before importing this club.",
+    });
+  });
+  it("rejects missing or duplicate layout choices rather than merging routings", async () => {
+    const layout = golfcoreDetail.layouts[0];
+    respond({
+      ...golfcoreDetail,
+      layouts: [layout, { ...layout, name: "Alternate" }],
+    });
+    await expect(
+      new GolfCoreProvider("").getCourse(`${golfcoreDetail.slug}::missing`),
+    ).rejects.toMatchObject({ kind: "invalid" });
+    respond({ ...golfcoreDetail, layouts: [layout, layout] });
+    await expect(
+      new GolfCoreProvider("").getCourseLayouts(golfcoreDetail.slug),
+    ).rejects.toMatchObject({ kind: "invalid" });
   });
   it("handles a course with no layouts or tees", async () => {
     respond({ ...golfcoreDetail, layouts: [] });

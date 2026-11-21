@@ -27,8 +27,6 @@ export interface TeeRow {
   course_rating: number | null;
   slope: number | null;
   total_yardage: number | null;
-  layout_id?: string | null;
-  hole_count?: number | null;
 }
 export interface HoleRow {
   id: string;
@@ -99,14 +97,13 @@ export function toTables(courses: Course[]): CourseTables {
         course_rating: t.courseRating ?? null,
         slope: t.slope ?? null,
         total_yardage: t.totalYardage ?? null,
-        layout_id: t.layoutId ?? null,
-        hole_count: t.pars.length || c.holes,
       });
       for (
         let i = 0;
         i <
         Math.max(
-          t.pars.length || c.holes,
+          c.holes,
+          t.pars.length,
           t.yardages?.length ?? 0,
           t.strokeIndexes?.length ?? 0,
         );
@@ -149,10 +146,7 @@ export function fromTables(tables: CourseTables): Course[] {
         const rows = tables.tee_holes
           .filter((h) => h.tee_id === t.id)
           .sort((a, b) => a.hole_number - b.hole_number);
-        const count = Math.max(
-          t.hole_count ?? c.hole_count,
-          ...rows.map((h) => h.hole_number),
-        );
+        const count = Math.max(c.hole_count, ...rows.map((h) => h.hole_number));
         const byNumber = new Map(rows.map((h) => [h.hole_number, h]));
         return {
           id: t.id,
@@ -162,7 +156,6 @@ export function fromTables(tables: CourseTables): Course[] {
           courseRating: t.course_rating ?? undefined,
           slope: t.slope ?? undefined,
           totalYardage: t.total_yardage ?? undefined,
-          layoutId: t.layout_id ?? undefined,
           pars: Array.from(
             { length: count },
             (_, i) => byNumber.get(i + 1)?.par ?? 0,

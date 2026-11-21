@@ -28,8 +28,6 @@ create table if not exists tees (
   slope integer,
   total_yardage integer
 );
-alter table tees add column if not exists layout_id text;
-alter table tees add column if not exists hole_count integer;
 create table if not exists holes (
   id text primary key default gen_random_uuid()::text,
   course_id text not null references courses(id) on delete cascade,

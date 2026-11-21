@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Course, Round, Tee } from "./types";
-import { createRound, roundTees, switchTee } from "./rounds";
+import { canUpdateTee, createRound, switchTee } from "./rounds";
 import { roundDetails } from "./roundDetails";
 
 it("snapshots SI for the selected nine and records nulls when switching to a legacy tee", () => {
@@ -93,29 +93,34 @@ describe("round creation", () => {
 });
 
 describe("tee switching", () => {
-  it("only offers and accepts tees in the snapshotted routing, even after tee removal", () => {
-    const white = { ...tee, layoutId: "Brabazon" };
-    const red = { ...white, id: "red" };
-    const other = { ...white, id: "other", layoutId: "PGA National" };
-    const club = { ...course, tees: [white, red, other] };
-    const round = createRound(club, white, ["Me"]);
-    expect(round.teeLayoutId).toBe("Brabazon");
-    expect(roundTees(round, club)).toEqual([white, red]);
-    expect(roundTees(round, { ...club, tees: [red, other] })).toEqual([red]);
-    expect(switchTee(round, other, 0, club)).toBe(round);
-    expect(switchTee(round, red, 0, club).teeId).toBe("red");
-    expect(roundTees({ ...round, teeLayoutId: undefined }, club)).toEqual([
-      white,
-      red,
-    ]);
-    expect(roundTees(round, { ...club, tees: [] })).toEqual([]);
+  it("accepts new manually added tees without a layout tag and rejects other courses' tees", () => {
+    const added = { ...tee, id: "added", name: "Added" };
+    const other = { ...tee, id: "other" };
+    const edited = { ...course, tees: [tee, added] };
+    const round = createRound(edited, tee, ["Me"]);
+    expect(switchTee(round, added, 0, edited).teeId).toBe("added");
+    expect(switchTee(round, other, 0, edited)).toBe(round);
   });
-  it("starts a nine-hole routing at hole one in a mixed eighteen-hole club", () => {
-    const nine = { ...tee, layoutId: "Balgove", pars: Array(9).fill(3) };
-    const round = createRound(course, nine, ["Me"], "back");
+  it("starts a separate nine-hole course at hole one", () => {
+    const nine = { ...tee, pars: Array(9).fill(3) };
+    const round = createRound(
+      { ...course, holes: 9, tees: [nine] },
+      nine,
+      ["Me"],
+      "back",
+    );
     expect(round.pars).toHaveLength(9);
     expect(round.scores[0]).toHaveLength(9);
     expect(round.startHole).toBe(0);
+  });
+  it("allows back-nine par corrections on an eighteen-hole course only for existing holes", () => {
+    expect(canUpdateTee(course, tee, 9)).toBe(true);
+    expect(canUpdateTee(course, tee, 17)).toBe(true);
+    expect(canUpdateTee({ ...course, holes: 9 }, tee, 9)).toBe(false);
+    expect(canUpdateTee(course, tee, 18)).toBe(false);
+    expect(canUpdateTee(undefined, tee, 0)).toBe(false);
+    expect(canUpdateTee(course, undefined, 0)).toBe(false);
+    expect(canUpdateTee(course, { ...tee, pars: [] }, 0)).toBe(false);
   });
   it("refreshes snapshots for the switched tee and course without changing scores", () => {
     const original = createRound(course, tee, ["Me"], "back");

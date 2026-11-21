@@ -1,4 +1,5 @@
 import type { CourseProvider, CourseSummary, Location } from "./types";
+import { CourseProviderError } from "./types";
 import {
   array,
   decode,
@@ -62,16 +63,32 @@ export class GolfCoreProvider implements CourseProvider {
     return courses;
   }
   async getCourse(id: string) {
+    const courses = await this.getCourseLayouts(id);
+    const selected = courses.find((course) => course.sourceId === id);
+    if (selected) return selected;
+    if (courses.length === 1 && !id.includes("::")) return courses[0];
+    throw new CourseProviderError(
+      this.id,
+      "invalid",
+      "Choose a course layout before importing this club.",
+    );
+  }
+  async getCourseLayouts(id: string) {
+    const slug = id.split("::")[0];
     const data = await fetchJson(
-      `${this.url}/courses/${encodeURIComponent(id)}`,
+      `${this.url}/courses/${encodeURIComponent(slug)}`,
       this.id,
     );
     return decode(this.id, () => {
       const raw = object(data);
       const layouts = array(raw.layouts).map(object);
-      const tees = layouts.flatMap((layout) => {
-        const prefix = layouts.length > 1 ? `${required(layout.name)} — ` : "";
-        return array(layout.tees)
+      const sourceId = required(raw.slug);
+      if (!layouts.length)
+        return [
+          mappedCourse(raw, this.id, sourceId, [], num(raw.hole_count) ?? 18),
+        ];
+      const courses = layouts.map((layout) => {
+        const tees = array(layout.tees)
           .map((t) => {
             const tee = object(t);
             const count =
@@ -79,23 +96,34 @@ export class GolfCoreProvider implements CourseProvider {
               array(tee.holes).length ||
               num(raw.hole_count) ||
               18;
-            const mapped = mapTee(tee, this.id, count, prefix);
-            return mapped
-              ? {
-                  ...mapped,
-                  layoutId: `${required(raw.slug)}:${required(layout.name)}`,
-                }
-              : null;
+            return mapTee(tee, this.id, count);
           })
           .filter((t) => t !== null);
+        const multi = layouts.length > 1;
+        const name = multi ? required(layout.name).trim() : undefined;
+        return mappedCourse(
+          multi
+            ? {
+                ...raw,
+                name: `${required(raw.name)} – ${name}`,
+                club_name: required(raw.name),
+              }
+            : raw,
+          this.id,
+          multi ? `${sourceId}::${encodeURIComponent(name!)}` : sourceId,
+          tees,
+          tees[0]?.pars.length ||
+            array(layout.holes).length ||
+            num(raw.hole_count) ||
+            18,
+        );
       });
-      return mappedCourse(
-        raw,
-        this.id,
-        required(raw.slug),
-        tees,
-        tees[0]?.pars.length ?? num(raw.hole_count) ?? 18,
-      );
+      if (
+        new Set(courses.map((course) => course.sourceId)).size !==
+        courses.length
+      )
+        throw new Error("Duplicate layout names");
+      return courses;
     });
   }
 }
