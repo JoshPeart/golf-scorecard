@@ -79,6 +79,8 @@ function coordinates(c: { lat?: number; lng?: number }): c is Location {
 }
 
 function similarName(a: CourseSummary, b: CourseSummary): boolean {
+  const numbers = (name: string) => name.match(/\p{N}+/gu)?.join(",") ?? "";
+  if (numbers(a.name) !== numbers(b.name)) return false;
   const key = (c: CourseSummary) =>
     [
       ...new Set(
@@ -119,6 +121,14 @@ export interface SearchOptions {
   online: boolean;
 }
 
+export function hasPlayableTee(course: Course): boolean {
+  return course.tees.some(
+    (tee) =>
+      tee.pars.length === course.holes &&
+      Array.from(tee.pars).every((par) => Number.isFinite(par) && par > 0),
+  );
+}
+
 export async function searchCourses(
   query: string,
   options: SearchOptions,
@@ -126,8 +136,9 @@ export async function searchCourses(
   results: CourseSummary[];
   errors: Partial<Record<ProviderId, CourseProviderError>>;
 }> {
-  const results: CourseSummary[] = searchLocal(options.courses, query).map(
-    (c) => ({
+  const results: CourseSummary[] = searchLocal(options.courses, query)
+    .filter((course) => !options.online || hasPlayableTee(course))
+    .map((c) => ({
       provider:
         c.source === "golfcore" || c.source === "golfcourseapi"
           ? c.source
@@ -139,8 +150,7 @@ export async function searchCourses(
       country: c.country,
       lat: c.lat,
       lng: c.lng,
-    }),
-  );
+    }));
   const errors: Partial<Record<ProviderId, CourseProviderError>> = {};
   const aliases = [...results];
   if (options.online && (normalizeName(query) || options.location)) {

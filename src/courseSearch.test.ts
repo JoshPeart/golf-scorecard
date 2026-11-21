@@ -54,6 +54,52 @@ function provider(
 }
 
 describe("local and federated course search", () => {
+  it.each([
+    ["Kedleston Course 1", "Kedleston Course 2", 2],
+    ["Kedleston Layout 3", "Kedleston Layout 4", 2],
+    ["Kedleston Layout 1", "Kedleston Layout 01", 2],
+    ["Kedleston Layout 1", "Kedlston Layout 1", 1],
+  ])(
+    "requires exact numbers when comparing %s to %s",
+    async (savedName, remoteName, count) => {
+      const saved = { ...course, name: savedName };
+      const remote: CourseSummary = {
+        ...summary,
+        provider: "golfcourseapi",
+        sourceId: "other",
+        name: remoteName,
+      };
+      const { results } = await searchCourses("Ked", {
+        courses: [saved],
+        providers: [provider("golfcourseapi", [remote])],
+        online: true,
+      });
+      expect(results).toHaveLength(count);
+    },
+  );
+  it.each([
+    { tees: [] },
+    { tees: [{ ...course.tees[0], pars: Array(18).fill(0) }] },
+  ])(
+    "does not hide online results behind an unplayable saved scorecard ($tees)",
+    async ({ tees }) => {
+      const saved = { ...course, tees };
+      const core = provider("golfcore", [summary]);
+      const { results } = await searchCourses("Ked", {
+        courses: [saved],
+        providers: [core],
+        online: true,
+      });
+      expect(results).toEqual([summary]);
+      const offline = await searchCourses("Ked", {
+        courses: [saved],
+        providers: [core],
+        online: false,
+      });
+      expect(offline.results).toHaveLength(1);
+      expect(core.searchCourses).toHaveBeenCalledTimes(1);
+    },
+  );
   it("matches accents, punctuation, tokens, substrings and typos without matching unrelated courses", () => {
     const courses = [
       course,

@@ -6,6 +6,7 @@ import {
   searchCourses,
   searchLocal,
   distanceMiles,
+  hasPlayableTee,
 } from "./courseSearch";
 import {
   GolfCoreProvider,
@@ -19,6 +20,7 @@ import {
   debounceSearch,
   savedCourseGroups,
   teeTotals,
+  cachedCourse,
 } from "./courseSelection";
 
 const defaultProviders: CourseProvider[] = [
@@ -31,13 +33,6 @@ const sourceLabel = (source: string) =>
     : source === "golfcourseapi"
       ? "GolfCourseAPI"
       : "Manual";
-const cachedCourse = (courses: Course[], result: CourseSummary) =>
-  courses.find((c) =>
-    result.provider === "local"
-      ? c.id === result.sourceId
-      : c.source === result.provider && c.sourceId === result.sourceId,
-  );
-
 export function TeeCard({
   tee,
   selected,
@@ -192,7 +187,14 @@ export function NewRound({
       cancel();
     };
   }, [query, location, courses, providers, online, searching]);
-  const local = searchLocal(courses, query);
+  const local = searchLocal(courses, query).filter(
+    (c) =>
+      !online ||
+      hasPlayableTee(c) ||
+      !search.results.some(
+        (r) => r.provider === c.source && r.sourceId === c.sourceId,
+      ),
+  );
   const localIds = new Set(
     local.map(
       (c) =>
@@ -229,7 +231,7 @@ export function NewRound({
       return distance(a) - distance(b);
     });
   async function pick(result: CourseSummary) {
-    const cached = cachedCourse(courses, result);
+    const cached = cachedCourse(courses, result, results.includes(result));
     setFetchError("");
     setTeeId("");
     if (cached) {
@@ -387,7 +389,8 @@ export function NewRound({
               courses.find(
                 (saved) =>
                   saved.source === layout.source &&
-                  saved.sourceId === layout.sourceId,
+                  saved.sourceId === layout.sourceId &&
+                  hasPlayableTee(saved),
               ) ?? layout,
           )}
           onPick={(layout) => {
@@ -413,7 +416,7 @@ export function NewRound({
                   </p>
                 ))}
               {ordered.map((r) => {
-                const cached = cachedCourse(courses, r);
+                const cached = cachedCourse(courses, r, results.includes(r));
                 const miles =
                   location && r.lat != null && r.lng != null
                     ? distanceMiles(location, { lat: r.lat, lng: r.lng })

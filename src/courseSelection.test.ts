@@ -6,6 +6,7 @@ import {
   savedCourseGroups,
   teeTotals,
   teeLabel,
+  cachedCourse,
 } from "./courseSelection";
 import { LayoutPicker, TeeCard } from "./CourseSearch";
 import { Scorecard } from "./Scorecard";
@@ -39,6 +40,18 @@ const course: Course = {
 };
 afterEach(() => vi.useRealTimers());
 describe("course selection UI", () => {
+  it("fetches online replacements for unusable cached scorecards while allowing offline editing", () => {
+    const empty = { ...course, tees: [] };
+    const result = {
+      provider: "golfcore" as const,
+      sourceId: course.sourceId!,
+      name: course.name,
+    };
+    expect(cachedCourse([empty], result)).toBe(empty);
+    expect(cachedCourse([empty], result, true)).toBeUndefined();
+    expect(cachedCourse([course], result, true)).toBe(course);
+    expect(cachedCourse([], result, true)).toBeUndefined();
+  });
   it("offers distinct layout courses before selecting tees", () => {
     const courses = [
       { ...course, name: "The Belfry – Derby", sourceId: "the-belfry::Derby" },

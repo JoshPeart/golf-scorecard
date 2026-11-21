@@ -1,4 +1,19 @@
 import type { Course, Round, Tee } from "./types";
+import type { CourseSummary } from "./providers/types";
+import { hasPlayableTee } from "./courseSearch";
+
+export const cachedCourse = (
+  courses: Course[],
+  result: CourseSummary,
+  refreshEmpty = false,
+) =>
+  courses.find(
+    (c) =>
+      (!refreshEmpty || hasPlayableTee(c)) &&
+      (result.provider === "local"
+        ? c.id === result.sourceId
+        : c.source === result.provider && c.sourceId === result.sourceId),
+  );
 
 export function savedCourseGroups(courses: Course[], rounds: Round[]) {
   const favourites = courses.filter((c) => c.favourite);
