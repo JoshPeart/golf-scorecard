@@ -120,6 +120,28 @@ describe("course selection UI", () => {
       expect(html).toContain(text);
     expect(round.pars).toEqual(Array(9).fill(5));
   });
+  it("does not display SI added to a tee after the round was created", () => {
+    const original = {
+      ...course,
+      tees: [{ ...course.tees[0], strokeIndexes: undefined }],
+    };
+    const round = createRound(original, original.tees[0], ["Me"]);
+    const html = renderToStaticMarkup(
+      createElement(Scorecard, {
+        round,
+        course,
+        hole: 0,
+        summary: false,
+        saved: true,
+        onChange: () => {},
+        onCourseChange: () => {},
+        onBack: () => {},
+        onDelete: () => {},
+        onNavigate: () => {},
+      }),
+    );
+    expect(html).not.toContain('class="hole-si"');
+  });
   it("shows quality/customised badges and safe source attribution", () => {
     expect(
       renderToStaticMarkup(

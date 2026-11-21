@@ -11,7 +11,10 @@ export function snapshotTee(
     teeName: tee.name,
     teeLayoutId: tee.layoutId,
     teeYardages: tee.yardages?.slice(startHole, startHole + holes),
-    teeStrokeIndexes: tee.strokeIndexes?.slice(startHole, startHole + holes),
+    teeStrokeIndexes: Array.from(
+      { length: holes },
+      (_, i) => tee.strokeIndexes?.[startHole + i] ?? null,
+    ),
   };
 }
 
