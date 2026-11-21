@@ -130,6 +130,21 @@ describe("GolfCore provider", () => {
       [],
     );
   });
+  it("uses a complete nine-hole layout instead of the club's eighteen-hole summary", async () => {
+    const raw = structuredClone(golfcoreDetail);
+    raw.layouts[0].holes = raw.layouts[0].holes.slice(0, 9);
+    raw.layouts[0].tees.forEach((t) => {
+      t.holes = t.holes.slice(0, 9);
+    });
+    respond(raw);
+    const course = await new GolfCoreProvider("").getCourse("balgove");
+    expect(course.holes).toBe(9);
+    expect(course.tees).toHaveLength(2);
+    expect(course.tees[0].pars).toHaveLength(9);
+    raw.layouts[0].holes = [];
+    respond(raw);
+    expect((await new GolfCoreProvider("").getCourse("balgove")).holes).toBe(9);
+  });
   it("drops a tee with even one missing par and flags a course if none remain", async () => {
     const raw = structuredClone(golfcoreDetail);
     raw.layouts[0].tees.forEach((t) => {

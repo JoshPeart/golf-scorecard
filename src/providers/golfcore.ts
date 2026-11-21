@@ -70,11 +70,17 @@ export class GolfCoreProvider implements CourseProvider {
       const raw = object(data);
       const layouts = array(raw.layouts).map(object);
       const tees = layouts.flatMap((layout) => {
-        const count =
-          Math.max(array(layout.holes).length, num(raw.hole_count) ?? 0) || 18;
         const prefix = layouts.length > 1 ? `${required(layout.name)} — ` : "";
         return array(layout.tees)
-          .map((t) => mapTee(object(t), this.id, count, prefix))
+          .map((t) => {
+            const tee = object(t);
+            const count =
+              array(layout.holes).length ||
+              array(tee.holes).length ||
+              num(raw.hole_count) ||
+              18;
+            return mapTee(tee, this.id, count, prefix);
+          })
           .filter((t) => t !== null);
       });
       return mappedCourse(
@@ -82,7 +88,7 @@ export class GolfCoreProvider implements CourseProvider {
         this.id,
         required(raw.slug),
         tees,
-        num(raw.hole_count) ?? tees[0]?.pars.length ?? 18,
+        tees[0]?.pars.length ?? num(raw.hole_count) ?? 18,
       );
     });
   }
