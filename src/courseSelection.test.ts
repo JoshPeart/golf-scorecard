@@ -92,8 +92,23 @@ describe("course selection UI", () => {
       expect(html).toContain(text);
     expect(teeTotals(course.tees[1])).toEqual({ par: 72, yards: undefined });
     expect(teeTotals({ ...course.tees[0], totalYardage: 7010 }).yards).toBe(
-      7010,
+      7200,
     );
+  });
+  it("prefers complete edited distances and retains provider totals for missing, partial or invalid yards", () => {
+    const tee = { ...course.tees[0], totalYardage: 7000 };
+    for (const yardages of [
+      undefined,
+      [],
+      [300],
+      [null, ...Array(17).fill(300)],
+      [0, ...Array(17).fill(300)],
+      [NaN, ...Array(17).fill(300)],
+    ])
+      expect(teeTotals({ ...tee, yardages }).yards).toBe(7000);
+    expect(
+      teeTotals({ ...tee, yardages: [500, ...Array(17).fill(300)] }).yards,
+    ).toBe(5600);
   });
   it("renders SI snapshot, back-nine offset and par variations without changing round pars", () => {
     const round = createRound(course, course.tees[0], ["Me"], "back");

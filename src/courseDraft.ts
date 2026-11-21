@@ -1,4 +1,5 @@
 import type { Course, Tee } from "./types";
+import { teeTotals } from "./courseSelection";
 
 export function copyVisiblePars(
   destination: Tee,
@@ -48,6 +49,10 @@ export function courseToSave(draft: Course, initial?: Course): Course | null {
   )
     course.customised = true;
   course.source ??= "manual";
+  course.tees = course.tees.map((tee) => ({
+    ...tee,
+    totalYardage: teeTotals(tee).yards,
+  }));
   return course;
 }
 

@@ -22,10 +22,11 @@ export function teeTotals(tee: Tee) {
   return {
     par: tee.pars.reduce((a, b) => a + b, 0),
     yards:
-      tee.totalYardage ??
-      (tee.yardages?.length && tee.yardages.every((y) => y != null)
+      tee.pars.length > 0 &&
+      tee.yardages?.length === tee.pars.length &&
+      tee.yardages.every((y) => y != null && Number.isFinite(y) && y > 0)
         ? tee.yardages.reduce<number>((a, b) => a + (b ?? 0), 0)
-        : undefined),
+        : tee.totalYardage,
   };
 }
 
