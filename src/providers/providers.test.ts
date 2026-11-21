@@ -176,7 +176,14 @@ describe("GolfCourseAPI provider", () => {
   });
   it("maps the documented search location and detail tee shapes", async () => {
     const provider = new GolfCourseAPIProvider("https://worker.example");
-    const fetcher = respond({ courses: [golfcourseapiDetail] });
+    const fetcher = respond({
+      courses: [
+        {
+          ...golfcourseapiDetail,
+          location: { ...golfcourseapiDetail.location, country: "Scotland" },
+        },
+      ],
+    });
     const summaries = await provider.searchCourses("Murray");
     expect(fetcher.mock.calls[0][0]).toBe(
       "https://worker.example/golfcourseapi/v1/search?search_query=Murray",
@@ -214,6 +221,56 @@ describe("GolfCourseAPI provider", () => {
       tees: [],
       lat: undefined,
     });
+  });
+  it("accepts UK country names/codes and rejects overseas, missing and similarly named countries", async () => {
+    const countries = [
+      "GB",
+      "UK",
+      "GBR",
+      "United Kingdom",
+      "England",
+      "scotland",
+      "Wales",
+      "Northern Ireland",
+      "Great Britain",
+      "United Kingdom of Great Britain and Northern Ireland",
+      "U.K.",
+      " gb ",
+      "GB-ENG",
+      "GB-SCT",
+      "GB-WLS",
+      "GB-NIR",
+      "United States",
+      "Republic of Ireland",
+      "Guernsey",
+      undefined,
+      "New England",
+      "British Virgin Islands",
+    ];
+    respond({
+      courses: countries.map((country, i) => ({
+        ...golfcourseapiDetail,
+        id: String(i),
+        location: { country },
+      })),
+    });
+    const results = await new GolfCourseAPIProvider(
+      "https://worker.example",
+    ).searchCourses("Park");
+    expect(results.map((r) => r.sourceId)).toEqual(
+      Array.from({ length: 16 }, (_, i) => String(i)),
+    );
+    respond({
+      courses: [
+        golfcourseapiDetail,
+        { ...golfcourseapiDetail, location: undefined },
+      ],
+    });
+    expect(
+      await new GolfCourseAPIProvider("https://worker.example").searchCourses(
+        "Park",
+      ),
+    ).toEqual([]);
   });
   it("drops incomplete scorecards rather than inventing a missing par", async () => {
     respond(golfcourseapiDetail);
