@@ -3,6 +3,24 @@ import type { Course, Round, Tee } from "./types";
 import { createRound, switchTee } from "./rounds";
 import { roundDetails } from "./roundDetails";
 
+it("snapshots SI for the selected nine and clears it on switching to a legacy tee", () => {
+  const indexes = Array.from({ length: 18 }, (_, i) => i + 1);
+  const tee = {
+    id: "si",
+    name: "White",
+    pars: Array(18).fill(4),
+    strokeIndexes: indexes,
+  };
+  const course = { id: "c", name: "Course", holes: 18 as const, tees: [tee] };
+  const round = createRound(course, tee, ["Me"], "back");
+  expect(round.teeStrokeIndexes).toEqual(indexes.slice(9));
+  indexes[9] = 1;
+  expect(round.teeStrokeIndexes![0]).toBe(10);
+  expect(
+    switchTee(round, { ...tee, strokeIndexes: undefined }, 0).teeStrokeIndexes,
+  ).toBeUndefined();
+});
+
 const tee: Tee = {
   id: "yellow",
   name: "Yellow",

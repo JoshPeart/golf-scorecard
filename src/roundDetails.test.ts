@@ -45,7 +45,10 @@ describe("round tee snapshots", () => {
         ],
       };
       expect(save(data)).toBe(true);
-      expect(load()).toEqual(data);
+      expect(load()).toEqual({
+        ...data,
+        courses: [{ ...course, source: "manual", verified: false }],
+      });
     } finally {
       vi.unstubAllGlobals();
     }

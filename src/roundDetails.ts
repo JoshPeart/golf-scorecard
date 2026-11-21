@@ -10,6 +10,7 @@ export function snapshotTee(
     courseName: course.name,
     teeName: tee.name,
     teeYardages: tee.yardages?.slice(startHole, startHole + holes),
+    teeStrokeIndexes: tee.strokeIndexes?.slice(startHole, startHole + holes),
   };
 }
 
