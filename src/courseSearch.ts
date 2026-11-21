@@ -136,7 +136,7 @@ export async function searchCourses(
   );
   const errors: Partial<Record<ProviderId, CourseProviderError>> = {};
   const aliases = [...results];
-  if (options.online && normalizeName(query)) {
+  if (options.online && (normalizeName(query) || options.location)) {
     const providers = [...options.providers].sort(
       (a, b) =>
         Number(a.id === "golfcourseapi") - Number(b.id === "golfcourseapi"),

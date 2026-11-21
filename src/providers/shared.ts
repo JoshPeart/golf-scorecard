@@ -96,6 +96,8 @@ export function mapTee(
     throw new Error("Invalid hole count");
   const byPosition = new Map(holes.map((h, i) => [positions[i], h]));
   const at = (index: number) => byPosition.get(index + 1) ?? {};
+  if (Array.from({ length }, (_, i) => at(i)).some((h) => !positive(h.par)))
+    return null;
   const color = name
     .toLowerCase()
     .match(
@@ -111,7 +113,7 @@ export function mapTee(
     courseRating: num(raw.rating ?? raw.course_rating),
     slope: num(raw.slope ?? raw.slope_rating),
     totalYardage: num(raw.yards ?? raw.total_yards),
-    pars: Array.from({ length }, (_, i) => positive(at(i).par) ?? 0),
+    pars: Array.from({ length }, (_, i) => positive(at(i).par)!),
     yardages: Array.from({ length }, (_, i) =>
       positive(at(i)[provider === "golfcore" ? "yards" : "yardage"]),
     ),

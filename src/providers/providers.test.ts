@@ -67,7 +67,11 @@ describe("GolfCore provider", () => {
     expect(await new GolfCoreProvider("").searchCourses("absent")).toEqual([]);
   });
   it("maps actual per-tee par, SI, ratings, colour and source, with null missing distances", async () => {
-    respond(golfcoreDetail);
+    const raw = structuredClone(golfcoreDetail);
+    delete (raw.layouts[0].tees[0].holes[2] as { yards?: number }).yards;
+    delete (raw.layouts[0].tees[0].holes[2] as { stroke_index?: number })
+      .stroke_index;
+    respond(raw);
     const course = await new GolfCoreProvider("").getCourse(
       golfcoreDetail.slug,
     );
@@ -92,7 +96,7 @@ describe("GolfCore provider", () => {
     expect(course.tees[0].yardages!.slice(0, 3)).toEqual([367, 400, null]);
     expect(course.tees[0].strokeIndexes!.slice(0, 3)).toEqual([11, 3, null]);
     expect(parDiffersByTee(course, 1)).toBe(true);
-    expect(needsChecking(course)).toContain("Missing pars");
+    expect(needsChecking(course)).not.toContain("Missing pars");
   });
   it("prefixes multiple layouts, drops empty/no-par tees and flags nonstandard counts", async () => {
     const layout = golfcoreDetail.layouts[0];
@@ -126,6 +130,16 @@ describe("GolfCore provider", () => {
       [],
     );
   });
+  it("drops a tee with even one missing par and flags a course if none remain", async () => {
+    const raw = structuredClone(golfcoreDetail);
+    raw.layouts[0].tees.forEach((t) => {
+      t.holes[7].par = 0;
+    });
+    respond(raw);
+    const course = await new GolfCoreProvider("").getCourse("incomplete");
+    expect(course.tees).toEqual([]);
+    expect(needsChecking(course)).toContain("No tees");
+  });
 });
 
 describe("GolfCourseAPI provider", () => {
@@ -152,7 +166,12 @@ describe("GolfCourseAPI provider", () => {
       lng: -88.3148,
       clubName: "Murray Golf Club",
     });
-    respond(golfcourseapiDetail);
+    const raw = structuredClone(golfcourseapiDetail);
+    raw.tees.male[0].holes = Array.from(
+      { length: 18 },
+      (_, i) => raw.tees.male[0].holes[i % 2],
+    );
+    respond(raw);
     const course = await provider.getCourse("7k2m9qb4");
     expect(course.tees[0]).toMatchObject({
       gender: "male",
@@ -161,8 +180,8 @@ describe("GolfCourseAPI provider", () => {
       courseRating: 75.7,
       slope: 132,
     });
-    expect(course.tees[0].strokeIndexes!.slice(0, 3)).toEqual([9, 17, null]);
-    expect(course.tees[0].pars.slice(0, 3)).toEqual([4, 3, 0]);
+    expect(course.tees[0].strokeIndexes!.slice(0, 3)).toEqual([9, 17, 9]);
+    expect(course.tees[0].pars.slice(0, 3)).toEqual([4, 3, 4]);
     expect(course.source).toBe("golfcourseapi");
   });
   it("returns empty results and maps missing location/empty tees", async () => {
@@ -174,6 +193,14 @@ describe("GolfCourseAPI provider", () => {
       tees: [],
       lat: undefined,
     });
+  });
+  it("drops incomplete scorecards rather than inventing a missing par", async () => {
+    respond(golfcourseapiDetail);
+    const course = await new GolfCourseAPIProvider(
+      "https://worker.example",
+    ).getCourse("incomplete");
+    expect(course.tees).toEqual([]);
+    expect(needsChecking(course)).toContain("No tees");
   });
 });
 

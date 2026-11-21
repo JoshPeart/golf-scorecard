@@ -1,5 +1,22 @@
-// GolfCore GET /v1/courses/st-andrews-old-course, trimmed to two holes per tee.
+// GolfCore GET /v1/courses/st-andrews-old-course, trimmed to Black tees.
 // Source: https://www.golfcore.org/courses/st-andrews-old-course/
+const yards = [
+  367, 400, 366, 413, 519, 368, 359, 170, 349, 341, 173, 309, 414, 527, 415,
+  377, 449, 354,
+];
+const malePars = [4, 4, 4, 4, 5, 4, 4, 3, 4, 4, 3, 4, 4, 5, 4, 4, 4, 4];
+const femalePars = [4, 5, 4, 5, 5, 4, 4, 3, 4, 4, 3, 4, 5, 5, 4, 4, 5, 4];
+const maleSi = [11, 3, 7, 1, 13, 9, 5, 15, 17, 18, 6, 14, 2, 12, 8, 10, 4, 16];
+const femaleSi = [
+  11, 3, 7, 13, 1, 9, 5, 15, 17, 18, 16, 6, 2, 10, 8, 4, 14, 12,
+];
+const teeHoles = (pars: number[], si: number[]) =>
+  pars.map((par, i) => ({
+    position: i + 1,
+    par,
+    stroke_index: si[i],
+    yards: yards[i],
+  }));
 export const golfcoreDetail = {
   slug: "st-andrews-old-course",
   name: "St Andrews Links - Old Course",
@@ -15,10 +32,7 @@ export const golfcoreDetail = {
       name: "St. Andrews - Old Course",
       par: 72,
       yards: 6400,
-      holes: [
-        { position: 1, par: 4, stroke_index: 11, yards: 352 },
-        { position: 2, par: 4, stroke_index: 3, yards: 385 },
-      ],
+      holes: Array.from({ length: 18 }, (_, i) => ({ position: i + 1 })),
       tees: [
         {
           name: "Black",
@@ -27,10 +41,7 @@ export const golfcoreDetail = {
           par: 72,
           rating: 73.4,
           slope: 136,
-          holes: [
-            { position: 1, par: 4, stroke_index: 11, yards: 367 },
-            { position: 2, par: 4, stroke_index: 3, yards: 400 },
-          ],
+          holes: teeHoles(malePars, maleSi),
         },
         {
           name: "Black",
@@ -39,10 +50,7 @@ export const golfcoreDetail = {
           par: 76,
           rating: 79.8,
           slope: 148,
-          holes: [
-            { position: 1, par: 4, stroke_index: 11, yards: 367 },
-            { position: 2, par: 5, stroke_index: 3, yards: 400 },
-          ],
+          holes: teeHoles(femalePars, femaleSi),
         },
       ],
     },

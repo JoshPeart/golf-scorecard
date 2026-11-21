@@ -24,14 +24,31 @@ export function resizeDraft(course: Course, holes: 9 | 18): Course {
         { length: Math.max(holes, tee.yardages?.length ?? 0) },
         (_, i) => tee.yardages?.[i] ?? null,
       ),
+      ...(tee.strokeIndexes
+        ? {
+            strokeIndexes: Array.from(
+              { length: Math.max(holes, tee.strokeIndexes.length) },
+              (_, i) => tee.strokeIndexes?.[i] ?? null,
+            ),
+          }
+        : {}),
     })),
   };
 }
 
-export function courseToSave(draft: Course): Course | null {
+export function courseToSave(draft: Course, initial?: Course): Course | null {
   if (!draft.name.trim() || draft.tees.some((tee) => !tee.name.trim()))
     return null;
-  return normalizeCourse(draft);
+  const course = normalizeCourse(draft);
+  if (
+    course.source &&
+    course.source !== "manual" &&
+    initial &&
+    isCourseDirty(draft, initial)
+  )
+    course.customised = true;
+  course.source ??= "manual";
+  return course;
 }
 
 export function normalizeCourse(draft: Course): Course {
@@ -46,6 +63,14 @@ export function normalizeCourse(draft: Course): Course {
         { length: draft.holes },
         (_, hole) => tee.yardages?.[hole] ?? null,
       ),
+      ...(tee.strokeIndexes
+        ? {
+            strokeIndexes: Array.from(
+              { length: draft.holes },
+              (_, i) => tee.strokeIndexes?.[i] ?? null,
+            ),
+          }
+        : {}),
     })),
   };
 }

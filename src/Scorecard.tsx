@@ -3,6 +3,7 @@ import type { Course, Round } from "./types";
 import { relative, segment } from "./scoring";
 import { switchTee } from "./rounds";
 import { roundDetails } from "./roundDetails";
+import { parDiffersByTee } from "./courseSearch";
 export function Scorecard({
   round,
   course,
@@ -49,6 +50,18 @@ export function Scorecard({
       (a, b) => (b.played ? 1 : 0) - (a.played ? 1 : 0) || a.toPar - b.toPar,
     );
   const details = roundDetails(round, course);
+  const si = round.teeStrokeIndexes
+    ? round.teeStrokeIndexes[hole]
+    : tee?.strokeIndexes?.[courseHole];
+  const otherPars =
+    course && parDiffersByTee(course, courseHole)
+      ? course.tees.filter(
+          (t) =>
+            t.id !== round.teeId &&
+            t.pars[courseHole] > 0 &&
+            t.pars[courseHole] !== round.pars[hole],
+        )
+      : [];
   const canUpdateTee =
     !!course && courseHole < course.holes && tee?.pars[courseHole] != null;
   function navigate(nextHole: number, nextSummary: boolean) {
@@ -158,7 +171,20 @@ export function Scorecard({
               <span className="yardage">
                 {details.yardages?.[hole] ?? "—"} <small>YDS</small>
               </span>
+              {si != null && (
+                <span className="hole-si">
+                  SI <b>{si}</b>
+                </span>
+              )}
             </div>
+            {!!otherPars.length && (
+              <p className="par-variation">
+                Par varies by tee ·{" "}
+                {otherPars
+                  .map((t) => `${t.name} par ${t.pars[courseHole]}`)
+                  .join(" · ")}
+              </p>
+            )}
           </div>
           {editing && (
             <form
@@ -172,6 +198,10 @@ export function Scorecard({
                 if (also && canUpdateTee && course && tee)
                   onCourseChange({
                     ...course,
+                    customised:
+                      course.source && course.source !== "manual"
+                        ? true
+                        : course.customised,
                     tees: course.tees.map((t) =>
                       t.id === tee.id
                         ? {

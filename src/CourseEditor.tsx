@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Course, Tee } from "./types";
+import { CourseBadges, SourceLink } from "./CourseBadges";
 import {
   copyVisiblePars,
   courseToSave,
@@ -28,7 +29,13 @@ export function CourseEditor({
   const [initialDraft] = useState<Course>(() =>
     course
       ? structuredClone(course)
-      : { id: crypto.randomUUID(), name: "", holes: 18, tees: [newTee(18)] },
+      : {
+          id: crypto.randomUUID(),
+          name: "",
+          holes: 18,
+          tees: [newTee(18)],
+          source: "manual",
+        },
   );
   const [draft, setDraft] = useState(initialDraft);
   const dirty = isCourseDirty(draft, initialDraft);
@@ -50,10 +57,19 @@ export function CourseEditor({
       </button>
       <div className="eyebrow">COURSE NOTEBOOK</div>
       <h1>{course ? "Edit course." : "Make it yours."}</h1>
+      <CourseBadges
+        course={{
+          ...draft,
+          customised:
+            draft.customised ||
+            (!!draft.source && draft.source !== "manual" && dirty),
+        }}
+      />
+      <SourceLink course={draft} />
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          const course = courseToSave(draft);
+          const course = courseToSave(draft, initialDraft);
           if (course) onSave(course);
         }}
       >
@@ -161,7 +177,10 @@ export function CourseEditor({
           </fieldset>
         ))}
         <h2>Hole details</h2>
-        <p className="muted">Pars belong to each tee. Yardages are optional.</p>
+        <p className="muted">
+          Pars belong to each tee. Yardages and stroke indexes (SI) are
+          optional.
+        </p>
         {draft.tees.length > 1 && (
           <p className="muted tee-scroll-hint">More tees? Scroll the table →</p>
         )}
@@ -173,7 +192,7 @@ export function CourseEditor({
                 {draft.tees.map((t) => (
                   <th key={t.id}>
                     {t.name}
-                    <small>Par / yards</small>
+                    <small>Par / yards / SI</small>
                   </th>
                 ))}
               </tr>
@@ -223,6 +242,34 @@ export function CourseEditor({
                                       ? Number(e.target.value)
                                       : null
                                     : (t.yardages?.[h] ?? null),
+                              ),
+                            })
+                          }
+                        />
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          min="1"
+                          max="18"
+                          step="1"
+                          aria-label={`Hole ${i + 1} ${t.name} SI`}
+                          placeholder="SI"
+                          value={t.strokeIndexes?.[i] ?? ""}
+                          onChange={(e) =>
+                            teeChange(t.id, {
+                              strokeIndexes: Array.from(
+                                {
+                                  length: Math.max(
+                                    draft.holes,
+                                    t.strokeIndexes?.length ?? 0,
+                                  ),
+                                },
+                                (_, h) =>
+                                  h === i
+                                    ? e.target.value
+                                      ? Number(e.target.value)
+                                      : null
+                                    : (t.strokeIndexes?.[h] ?? null),
                               ),
                             })
                           }
