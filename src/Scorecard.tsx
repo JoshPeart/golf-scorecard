@@ -4,6 +4,7 @@ import { relative, segment } from "./scoring";
 import { roundTees, switchTee } from "./rounds";
 import { roundDetails } from "./roundDetails";
 import { parDiffersByTee } from "./courseSearch";
+import { teeLabel } from "./courseSelection";
 export function Scorecard({
   round,
   course,
@@ -124,10 +125,16 @@ export function Scorecard({
             {!tee && <option value={round.teeId}>{details.teeName}</option>}
             {tees.map((t) => (
               <option key={t.id} value={t.id}>
-                {t.id === round.teeId ? details.teeName : t.name}
+                {teeLabel(
+                  t,
+                  tees,
+                  t.id === round.teeId ? details.teeName : t.name,
+                )}
               </option>
             ))}
           </select>
+        ) : tee ? (
+          teeLabel(tee, tees, details.teeName)
         ) : (
           details.teeName
         )}{" "}
@@ -182,7 +189,7 @@ export function Scorecard({
               <p className="par-variation">
                 Par varies by tee ·{" "}
                 {otherPars
-                  .map((t) => `${t.name} par ${t.pars[courseHole]}`)
+                  .map((t) => `${teeLabel(t, tees)} par ${t.pars[courseHole]}`)
                   .join(" · ")}
               </p>
             )}

@@ -30,6 +30,26 @@ export function teeTotals(tee: Tee) {
   };
 }
 
+export function teeLabel(tee: Tee, tees: Tee[], name = tee.name): string {
+  if (
+    !tees.some(
+      (t) =>
+        t.id !== tee.id &&
+        t.name.trim().toLowerCase() === tee.name.trim().toLowerCase(),
+    )
+  )
+    return name;
+  const gender =
+    tee.gender === "male"
+      ? "Men's"
+      : tee.gender === "female"
+        ? "Women's"
+        : tee.gender === "mixed"
+          ? "Mixed"
+          : "Unspecified";
+  return `${name} (${gender})`;
+}
+
 export function debounceSearch(action: () => void, milliseconds = 300) {
   const timer = setTimeout(action, milliseconds);
   return () => clearTimeout(timer);

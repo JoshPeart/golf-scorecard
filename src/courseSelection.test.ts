@@ -5,6 +5,7 @@ import {
   debounceSearch,
   savedCourseGroups,
   teeTotals,
+  teeLabel,
 } from "./courseSelection";
 import { TeeCard } from "./CourseSearch";
 import { Scorecard } from "./Scorecard";
@@ -38,6 +39,44 @@ const course: Course = {
 };
 afterEach(() => vi.useRealTimers());
 describe("course selection UI", () => {
+  it("disambiguates duplicate tee names by gender in round options and par variations", () => {
+    const female = {
+      ...course.tees[0],
+      id: "white-female",
+      gender: "female" as const,
+      pars: Array(18).fill(4),
+    };
+    const mixed = { ...female, id: "white-mixed", gender: "mixed" as const };
+    const duplicate = { ...course, tees: [...course.tees, female, mixed] };
+    expect(teeLabel(duplicate.tees[0], duplicate.tees)).toBe("White (Men's)");
+    expect(teeLabel(female, duplicate.tees)).toBe("White (Women's)");
+    expect(teeLabel(mixed, duplicate.tees)).toBe("White (Mixed)");
+    expect(teeLabel({ ...female, gender: undefined }, duplicate.tees)).toBe(
+      "White (Unspecified)",
+    );
+    expect(teeLabel(course.tees[1], duplicate.tees)).toBe("Red");
+    expect(teeLabel(female, [])).toBe("White");
+    const round = createRound(duplicate, duplicate.tees[0], ["Me"]);
+    const html = renderToStaticMarkup(
+      createElement(Scorecard, {
+        round,
+        course: duplicate,
+        hole: 0,
+        summary: false,
+        saved: true,
+        onChange: () => {},
+        onCourseChange: () => {},
+        onBack: () => {},
+        onDelete: () => {},
+        onNavigate: () => {},
+      }),
+    ).replace(/&#x27;/g, "'");
+    expect(html).toContain("White (Men's)</option>");
+    expect(html).toContain("White (Women's)</option>");
+    expect(html).toContain("White (Women's) par 4");
+    expect(html).toContain("White (Mixed) par 4");
+    expect(html).not.toContain("White par 4");
+  });
   it("debounces and cancels replaced searches at 300ms", () => {
     vi.useFakeTimers();
     const search = vi.fn();
