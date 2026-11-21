@@ -100,7 +100,7 @@ export function Scorecard({
           day: "numeric",
         })}{" "}
         ·{" "}
-        {course && tees.length > 1 ? (
+        {course && (tees.length > 1 || !tee) ? (
           <select
             className="tee-select"
             aria-label="Round tee"
